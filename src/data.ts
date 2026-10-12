@@ -1,5 +1,5 @@
 export type Artist = { id:string;name:string;location:string;bio:string;source:string };
-export type Artwork = { id:string;title:string;author:string;year:number|null;room:number;type:"image"|"model";image?:string;description:string;source?:string;kind?:string;rights?:"reference"|"demo"|"licensed" };
+export type Artwork = { id:string;title:string;author:string;year:number|null;room:number;type:"image"|"model";image?:string;modelUrl?:string;description:string;source?:string;kind?:string;rights?:"reference"|"demo"|"licensed" };
 export const artists:Artist[] = [
 {id:"linscker",name:"Linscker Marim",location:"Rondonópolis, MT",bio:"Artista visual, pesquisadora e professora com trabalhos em moda, arte têxtil, performance e audiovisual. Idealizou Entre Fios & Tramas, financiada em 2024 pela FARM e pelo Instituto Precisa Ser.",source:"https://panorama.labfront.com.br/os-artistas/"},
 {id:"sol",name:"O Sol Ferreira",location:"Cuiabá e Várzea Grande, MT",bio:"Multiartista transmasculino de Mato Grosso. Sua produção cruza artes visuais, literatura, performance, memória e território.",source:"https://www.hnt.com.br/cuiabanalia/exposicao-homem-fruta-homem-mato-destaca-trajetoria-de-o-sol-ferreira-na-ufmt/510752"}
