@@ -5,7 +5,7 @@ Museu virtual 3D, em React + TypeScript + React Three Fiber + Three.js. A primei
 ## Executar
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -23,10 +23,12 @@ Hospedagem: Vercel, framework Vite, saída `dist`, repositório `vihangel/Desvio
 - Menu de acesso direto às salas e visita guiada por registros.
 - Fichas editoriais, links de fonte e narração por voz sintetizada.
 - Curadoria documental inicial: Linscker Marim e O Sol Ferreira.
-- Painel mockado para editar títulos, autores, descrições, categorias, sala e imagens.
+- Editor local separado em cadastro, créditos por artista, mídia, sala e slots sem sobreposição.
 - Inclusão de registros próprios em `localStorage`; restauração do acervo original.
 - Preview de arquivos `.glb` em pedestal, a partir de URL pública ou arquivo local durante a sessão.
-- Datas e estados de exposições (rascunho/publicada/arquivada) **simulados**.
+- Rascunho separado da versão publicada, com revisão, publicação e arquivamento **locais**.
+- Rotas públicas `/`, `/museu`, `/obras` e `/artistas`, com histórico e recarregamento.
+- Prévia 3D do rascunho dentro do editor.
 
 ## Limitações importantes
 
@@ -48,4 +50,24 @@ O público usa o menu **Início / Museu 3D / Obras / Artistas**. Não existe op�
 
 A rota `/admin` abriga, temporariamente, um **editor de demonstração local**. Ela não representa autenticação ou segurança: qualquer pessoa que saiba a URL pode acessar o modo de teste, mas as edições não alteram o acervo público no servidor. Para um verdadeiro admin restrito, será obrigatório implementar Supabase Auth, RLS e persistência no banco. Não usar informações privadas no modo mock.
 
-As salas continuam como templates codificados; gestão dinâmica de criação/conexão das salas e editor de posicionamento ficam para a etapa com modelos persistentes. A imagem do painel de detalhes e a textura 3D usam o mesmo campo `image` do registro.
+As salas continuam como templates codificados; gestão dinâmica de criação/conexão das salas e editor de posicionamento ficam para a etapa com modelos persistentes. A imagem do painel de detalhes e a textura 3D usam a mesma mídia vinculada ao registro.
+
+## Arquitetura e validação
+
+O projeto separa domínio, infraestrutura local, composição de serviços, páginas, componentes compartilhados e cena 3D. Consulte [docs/ARQUITETURA.md](docs/ARQUITETURA.md) e o [contrato de integração Supabase](docs/SUPABASE.md).
+
+```bash
+npm run check
+```
+
+O comando verifica formatação, testes e build. A CI instala pelo lockfile com `npm ci`.
+
+O acervo antigo (`desvio:works:v2`) é migrado para o rascunho v3; suas alterações só aparecem no catálogo público deste navegador após revisão/publicação local. A chave antiga é preservada. Dados inválidos exibem erro em vez de serem substituídos silenciosamente.
+
+A integração remota ainda depende de identificar o projeto Supabase e implementar migrations, RLS, Auth, Storage e os adaptadores reais. Os contratos e os limites de cada camada já estão definidos; o editor local não constitui autenticação.
+
+## Prévia local de Linscker
+
+Com `npm run dev`, acesse `/previa/linscker` ou use “Abrir prévia das obras” na página inicial. A montagem mostra **Além das Amarras**, **A Neca da Boneca** e **Retificada**, com ficha resumida, fonte e acesso direto à posição de cada obra no museu 3D. As imagens preservam a proporção na moldura.
+
+A prévia não altera o acervo publicado nem os rascunhos locais. A rota e o carregamento dessas imagens são exclusivos do desenvolvimento; a aprovação de reprodução pública ainda precisa ser registrada.

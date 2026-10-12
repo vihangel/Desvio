@@ -1,5 +1,132 @@
-import {mobileInput} from "./mobileControls";
-import{useEffect,useState}from"react";import{ArrowRight,Compass,Footprints,Volume2,Pause,X,LayoutDashboard,Info}from"lucide-react";import Gallery from"./Gallery";import{artworks as initialWorks,artists,rooms,type Artwork}from"./data";import Admin from"./Admin";
+import { lazy, Suspense, useCallback, useState } from "react";
+import type { Artwork } from "./domain/entities";
+import { selectArtworks } from "./domain/selectors";
+import { useNavigation } from "./app/useNavigation";
+import { useCollection } from "./app/useCollection";
+import {
+  collectionRepository,
+  mediaService,
+  loadLinsckerPreview,
+} from "./app/services";
+import Header from "./shared/Header";
+import ArtworkDialog from "./shared/ArtworkDialog";
+import HomePage from "./features/home/HomePage";
+import CatalogPage from "./features/catalog/CatalogPage";
+import ArtistsPage from "./features/artists/ArtistsPage";
+import VisitPage from "./features/visit/VisitPage";
+const LocalPreviewPage = import.meta.env.DEV
+  ? lazy(() => import("./features/visit/LocalPreviewPage"))
+  : null;
+const AdminPage = lazy(() => import("./features/admin/AdminPage"));
+export default function App() {
+  const { page, go } = useNavigation();
+  const { state, setState, loading, error, recover } =
+    useCollection(collectionRepository);
+  const [selected, setSelected] = useState<Artwork | null>(null);
+  const [guided, setGuided] = useState(false);
+  const close = useCallback(() => setSelected(null), []);
+  const navigate = (next: Parameters<typeof go>[0]) => {
+    close();
+    go(next);
+  };
+  const snapshot = state?.published;
+  const works =
+    snapshot && snapshot.exhibition.status === "published"
+      ? selectArtworks(snapshot)
+      : [];
+  return (
+    <div className="app">
+      <Header go={navigate} />
+      {import.meta.env.DEV && page === "home" && (
+        <div className="local-preview-link">
+          <span>Obras de Linscker disponíveis para montagem local.</span>
+          <button onClick={() => navigate("preview")}>
+            Abrir prévia das obras →
+          </button>
+        </div>
+      )}
 
-function MobileJoystick({disabled}:{disabled:boolean}){const[position,setPosition]=useState({x:0,y:0});useEffect(()=>()=>{mobileInput.forward=0;mobileInput.strafe=0},[]);const reset=()=>{mobileInput.forward=0;mobileInput.strafe=0;setPosition({x:0,y:0})};const move=(e:React.PointerEvent<HTMLDivElement>)=>{if(disabled)return;const box=e.currentTarget.getBoundingClientRect();const radius=box.width*.34;const x=Math.max(-1,Math.min(1,(e.clientX-(box.left+box.width/2))/radius));const y=Math.max(-1,Math.min(1,(e.clientY-(box.top+box.height/2))/radius));const length=Math.max(1,Math.hypot(x,y));mobileInput.strafe=x/length;mobileInput.forward=-y/length;setPosition({x:x/length,y:y/length})};return <div className="mobile-controls"><div className="joystick" aria-label="Controle de movimentação" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);move(e)}} onPointerMove={e=>{if(e.buttons)move(e)}} onPointerUp={reset} onPointerCancel={reset}><div className="joystick-stick" style={{transform:`translate(calc(-50% + ${position.x*35}px),calc(-50% + ${position.y*35}px))`}}/></div><span className="look-hint">Arraste à direita para olhar</span></div>}
-export default function App(){const[page,setPage]=useState<"home"|"visit"|"catalog"|"artists"|"admin">(()=>location.pathname==="/admin"?"admin":"home");const[adminPreview,setAdminPreview]=useState(false);const go=(screen:"home"|"visit"|"catalog"|"artists"|"admin")=>{history.pushState({}, "",screen==="admin"?"/admin":"/");setPage(screen)};useEffect(()=>{const pop=()=>setPage(location.pathname==="/admin"?"admin":"home");window.addEventListener("popstate",pop);return()=>window.removeEventListener("popstate",pop)},[]);const[works,setWorks]=useState<Artwork[]>(()=>{try{const raw=localStorage.getItem("desvio:works:v2");return raw?JSON.parse(raw) as Artwork[]:initialWorks}catch{return initialWorks}});useEffect(()=>{try{localStorage.setItem("desvio:works:v2",JSON.stringify(works.map(w=>w.modelUrl?.startsWith("blob:")?{...w,modelUrl:undefined}:w)))}catch{}},[works]);const[jumpTo,setJumpTo]=useState({room:0,version:0});const[selected,setSelected]=useState<Artwork|null>(null);const[room,setRoom]=useState(0);const[guided,setGuided]=useState(false);const[stop,setStop]=useState(0);const[speaking,setSpeaking]=useState(false);const open=(a:Artwork)=>setSelected(a);const close=()=>{window.speechSynthesis?.cancel();setSpeaking(false);setSelected(null)};const say=(a:Artwork)=>{if(!("speechSynthesis"in window))return;if(speaking){window.speechSynthesis.cancel();setSpeaking(false);return}const u=new SpeechSynthesisUtterance(a.title+". "+a.description);u.lang="pt-BR";u.onend=()=>setSpeaking(false);speechSynthesis.speak(u);setSpeaking(true)};return <div className="app"><header><button className="brand" onClick={()=>{close();go("home")}}>◈ <b>DESVIO</b><small>MUSEU VIRTUAL</small></button><nav><button onClick={()=>go("home")}>Início</button><button onClick={()=>go("visit")}>Museu 3D</button><button onClick={()=>go("catalog")}>Obras</button><button onClick={()=>go("artists")}>Artistas</button></nav><span className="beta">PROTÓTIPO 0.1</span></header>{page==="home"&&<main className="home"><div className="eyebrow">ACERVO TRANS DE MATO GROSSO · PESQUISA CURATORIAL</div><h1>Outras formas<br/>de <em>existir.</em></h1><p>Conheça produções trans de Mato Grosso, entre artes visuais, moda e audiovisual. Um acervo em construção que começa com Linscker Marim e O Sol Ferreira.</p><div className="actions"><button className="primary" onClick={()=>{setGuided(false);go("visit")}}><Footprints size={18}/> Explorar livremente <ArrowRight size={17}/></button><button className="outline" onClick={()=>{setGuided(true);setStop(0);go("visit")}}><Compass size={18}/> Visita guiada</button></div><section className="feature"><div><small>EM EXPOSIÇÃO</small><h2>Corpos, fios e territórios</h2><p>Esta prévia reúne projetos artísticos documentados. Os painéis são editoriais e não reproduzem as obras originais.</p><span>03 salas · 02 artistas · 06 registros de pesquisa</span></div><div className="triptych"><img src="/art/desvio-fios.svg" alt="Painel editorial fios e tramas"/><img src="/art/desvio-homem.svg" alt="Painel editorial homem-mato"/><img src="/art/desvio-transformacao.svg" alt="Painel editorial videoarte"/></div></section><div className="artist-grid">{artists.map(a=><article key={a.id}><small>{a.location}</small><h2>{a.name}</h2><p>{a.bio}</p><a href={a.source} target="_blank" rel="noopener noreferrer">Conhecer referência ↗</a></article>)}</div><p className="curatorial-warning">Prévia curatorial independente. As pessoas artistas ainda não estão vinculadas à plataforma. A reprodução das obras dependerá de autorização.</p></main>}{page==="catalog"&&<main className="admin public-collection"><div className="eyebrow">DESVIO · ACERVO TRANS DE MATO GROSSO</div><h1>Obras e projetos</h1><p>Explore os registros curatoriais e as fontes públicas. Os painéis são ilustrativos e não reproduzem obras originais.</p><div className="public-work-grid">{works.filter(w=>w.rights!=="demo").map(w=><button key={w.id} onClick={()=>open(w)} className="public-work-card">{w.image&&<img src={w.image} alt={"Painel editorial: "+w.title}/>}<span className="public-work-copy"><small>{w.kind||"Registro"} · {w.year??"Ano a confirmar"}</small><b>{w.title}</b><span>{w.author}</span><span className="view-details">Conhecer registro ↗</span></span></button>)}</div></main>}{page==="artists"&&<main className="admin"><div className="eyebrow">DESVIO · PESSOAS ARTISTAS</div><h1>Artistas do acervo</h1><p>Conheça as trajetórias documentadas nesta pesquisa curatorial.</p><div className="artist-grid">{artists.map(a=><article key={a.id}><small>{a.location}</small><h2>{a.name}</h2><p>{a.bio}</p><h3>Registros no Desvio</h3>{works.filter(w=>w.author.includes(a.name)).map(w=><button className="artist-work-link" key={w.id} onClick={()=>open(w)}>{w.title} ↗</button>)}<a href={a.source} target="_blank" rel="noopener noreferrer">Fonte da trajetória ↗</a></article>)}</div></main>}{page==="visit"&&<div className="viewer"><Gallery works={works} jumpTo={jumpTo} onSelect={open} onRoom={setRoom} enabled={!selected}/><div className="room-picker" aria-label="Navegar entre salas">{rooms.map((r,i)=><button key={r.name} className={room===i?"active":""} onClick={()=>setJumpTo(j=>({room:i,version:j.version+1}))}>{i+1} · {r.name}</button>)}</div><MobileJoystick disabled={!!selected}/><div className="scene-title"><small>SALA {room+1} DE 3</small><h2>{rooms[room].name}</h2><p>{rooms[room].subtitle}</p></div><span className="crosshair">+</span><div className="help"><Info size={15}/> WASD ou setas para andar · Arraste para olhar · Clique nas obras</div><button className="guide-toggle" onClick={()=>setGuided(!guided)}><Compass size={17}/>{guided?"Encerrar visita guiada":"Iniciar visita guiada"}</button>{guided&&<aside className="tour"><small>VISITA GUIADA · {stop+1}/6</small><h3>{works[stop].title}</h3><p>{works[stop].author}</p><div className="actions"><button onClick={()=>open(works[stop])}>Ver registro</button><button onClick={()=>{const n=(stop+1)%works.length;setStop(n);setJumpTo(j=>({room:works[n].room,version:j.version+1}))}}>Próxima →</button></div></aside>}</div>}{page==="admin"&&(adminPreview?<><div className="admin-preview-banner"><b>Ambiente de edição demonstrativo</b><span>Sem autenticação real. Alterações apenas no seu navegador. Não use dados confidenciais.</span><button onClick={()=>{setAdminPreview(false);go("home")}}>Sair da edição</button></div><Admin works={works} onChange={setWorks}/></>:<main className="admin admin-gate"><div className="eyebrow">ÁREA ADMINISTRATIVA</div><h1>Gestão do Desvio</h1><p>O acesso administrativo real será habilitado com Supabase Auth e permissões RLS. Por enquanto, a edição é apenas um modo de demonstração local, sem controle de identidade ou armazenamento compartilhado.</p><button className="primary" onClick={()=>setAdminPreview(true)}>Entrar no editor demonstrativo</button><button className="outline" onClick={()=>go("home")}>Voltar ao museu</button></main>)}{selected&&<div className="scrim" onClick={close}><div className="modal" onClick={e=>e.stopPropagation()}><button className="dismiss" onClick={close} aria-label="Fechar"><X/></button><div className="visual">{selected.image?<img src={selected.image} alt={selected.title}/>:<span>◈</span>}</div><div className="description"><small>ACERVO DESVIO · {selected.year}</small><h2>{selected.title}</h2><h3>{selected.author}</h3><p>{selected.description}</p><button className="primary" onClick={()=>say(selected)}>{speaking?<Pause size={16}/>:<Volume2 size={16}/>} {speaking?"Parar narração":"Ouvir a obra"}</button><p className="disclaimer">Narração por voz sintetizada do navegador, sem representar a voz da pessoa artista.</p>{selected.rights==="reference"&&<p className="rights-note">Painel editorial do Desvio. Não é reprodução da obra original.</p>}{selected.source&&<a className="source-link" href={selected.source} target="_blank" rel="noopener noreferrer">Consultar fonte pública ↗</a>}</div></div></div>}</div>}
+      {loading && (
+        <main className="admin" role="status">
+          Carregando acervo…
+        </main>
+      )}
+      {error && (
+        <main className="admin">
+          <p role="alert">{error}</p>
+          <button onClick={() => void recover()}>
+            Restaurar demonstração local
+          </button>
+        </main>
+      )}
+      {!loading && !error && state && snapshot && (
+        <>
+          {page === "home" && (
+            <HomePage
+              snapshot={
+                snapshot.exhibition.status === "published"
+                  ? snapshot
+                  : { ...snapshot, records: [], placements: [] }
+              }
+              onVisit={(value) => {
+                setGuided(value);
+                navigate("visit");
+              }}
+            />
+          )}
+          {page === "catalog" && (
+            <CatalogPage works={works} onSelect={setSelected} />
+          )}
+          {page === "artists" && (
+            <ArtistsPage
+              artists={snapshot.artists}
+              works={works}
+              onSelect={setSelected}
+            />
+          )}
+          {page === "visit" && (
+            <VisitPage
+              works={works}
+              rooms={snapshot.rooms}
+              onSelect={setSelected}
+              disabled={!!selected}
+              initialGuided={guided}
+            />
+          )}
+          {page === "preview" && LocalPreviewPage && (
+            <Suspense
+              fallback={<main className="admin">Carregando prévia…</main>}
+            >
+              <LocalPreviewPage
+                base={state.published}
+                loadPreview={loadLinsckerPreview}
+              />
+            </Suspense>
+          )}
+          {page === "admin" && (
+            <Suspense
+              fallback={<main className="admin">Carregando editor…</main>}
+            >
+              <AdminPage
+                state={state}
+                repository={collectionRepository}
+                mediaService={mediaService}
+                onChange={setState}
+                onExit={() => navigate("home")}
+              />
+            </Suspense>
+          )}
+          {page === "not_found" && (
+            <main className="admin">
+              <h1>Página não encontrada</h1>
+              <button onClick={() => navigate("home")}>Voltar ao museu</button>
+            </main>
+          )}
+        </>
+      )}
+      {selected && (
+        <ArtworkDialog key={selected.id} selected={selected} onClose={close} />
+      )}
+    </div>
+  );
+}
