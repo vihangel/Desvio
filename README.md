@@ -41,3 +41,11 @@ Hospedagem: Vercel, framework Vite, saída `dist`, repositório `vihangel/Desvio
 3. Armazenamento persistente e conversão de imagens/GLB, vídeos e áudios.
 4. Mediação e roteiros guiados com legendas e trilhas aprovadas pelas pessoas artistas.
 5. Acessibilidade, testes em celulares e controle de desempenho/colisões.
+
+## Navegação pública e administração
+
+O público usa o menu **Início / Museu 3D / Obras / Artistas**. Não existe opção de edição nesses caminhos.
+
+A rota `/admin` abriga, temporariamente, um **editor de demonstração local**. Ela não representa autenticação ou segurança: qualquer pessoa que saiba a URL pode acessar o modo de teste, mas as edições não alteram o acervo público no servidor. Para um verdadeiro admin restrito, será obrigatório implementar Supabase Auth, RLS e persistência no banco. Não usar informações privadas no modo mock.
+
+As salas continuam como templates codificados; gestão dinâmica de criação/conexão das salas e editor de posicionamento ficam para a etapa com modelos persistentes. A imagem do painel de detalhes e a textura 3D usam o mesmo campo `image` do registro.
