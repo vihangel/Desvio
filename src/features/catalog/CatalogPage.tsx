@@ -11,8 +11,9 @@ export default function CatalogPage({
       <div className="eyebrow">DESVIO · ACERVO TRANS DE MATO GROSSO</div>
       <h1>Obras e projetos</h1>
       <p>
-        Explore os registros curatoriais e as fontes públicas. Os painéis são
-        ilustrativos e não reproduzem obras originais.
+        Explore as obras, os registros curatoriais e suas fontes. Imagens de
+        catálogo demonstram a montagem; painéis editoriais identificam os demais
+        projetos.
       </p>
       <div className="public-work-grid">
         {works
@@ -23,9 +24,7 @@ export default function CatalogPage({
               onClick={() => open(w)}
               className="public-work-card"
             >
-              {w.image && (
-                <img src={w.image} alt={"Painel editorial: " + w.title} />
-              )}
+              {w.image && <img src={w.image} alt={w.alt} />}
               <span className="public-work-copy">
                 <small>
                   {w.kind || "Registro"} · {w.year ?? "Ano a confirmar"}

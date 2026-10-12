@@ -10,10 +10,7 @@ export { localMediaService as mediaService } from "../infrastructure/local/Local
 export async function loadLinsckerPreview(
   snapshot: import("../domain/entities").CollectionSnapshot,
 ) {
-  if (import.meta.env.DEV) {
-    const { createLinsckerPreview } =
-      await import("../infrastructure/local/linsckerPreview");
-    return createLinsckerPreview(snapshot);
-  }
-  throw new Error("Prévia disponível somente no ambiente local.");
+  const { createLinsckerPreview } =
+    await import("../infrastructure/local/linsckerPreview");
+  return createLinsckerPreview(snapshot);
 }

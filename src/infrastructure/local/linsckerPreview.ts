@@ -60,6 +60,12 @@ export function createLinsckerPreview(
   const room = snapshot.rooms.find((r) => r.id === seedId(10));
   if (!artist || !room)
     throw new Error("A sala e o cadastro de Linscker não estão disponíveis.");
+  const missingSamples = samples.filter(
+    (sample) =>
+      !snapshot.records.some(
+        (record) => record.id === seedId(1000 + sample.number),
+      ),
+  );
   const available = roomSlots(room).filter(
     (s) =>
       s.type === "image" &&
@@ -67,11 +73,11 @@ export function createLinsckerPreview(
         (p) => p.roomId === room.id && p.slotId === s.id,
       ),
   );
-  if (available.length < samples.length)
+  if (available.length < missingSamples.length)
     throw new Error(
       "A sala de Linscker precisa de três slots livres para esta prévia.",
     );
-  samples.forEach((sample, index) => {
+  missingSamples.forEach((sample, index) => {
     const id = seedId(1000 + sample.number),
       mediaId = seedId(1100 + sample.number),
       slot = available[index];

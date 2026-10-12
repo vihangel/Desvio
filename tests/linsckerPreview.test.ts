@@ -33,6 +33,10 @@ describe("local Linscker preview", () => {
       stateSchema.parse({ ...state, draft: preview }).draft.records,
     ).toHaveLength(10);
   });
+  it("does not duplicate works when the overlay is applied again", () => {
+    const once = createLinsckerPreview(createSeed().published);
+    expect(createLinsckerPreview(once)).toEqual(once);
+  });
   it("uses free slots and preserves existing placements", () => {
     const base = createSeed().published,
       preview = createLinsckerPreview(base);

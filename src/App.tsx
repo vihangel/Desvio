@@ -1,5 +1,5 @@
-import { lazy, Suspense, useCallback, useState } from "react";
-import type { Artwork } from "./domain/entities";
+import { lazy, Suspense, useCallback, useState, useEffect } from "react";
+import type { Artwork, CollectionSnapshot } from "./domain/entities";
 import { selectArtworks } from "./domain/selectors";
 import { useNavigation } from "./app/useNavigation";
 import { useCollection } from "./app/useCollection";
@@ -29,7 +29,37 @@ export default function App() {
     close();
     go(next);
   };
-  const snapshot = state?.published;
+  const published = state?.published;
+  const [localCollection, setLocalCollection] = useState<{
+    base: CollectionSnapshot;
+    snapshot: CollectionSnapshot;
+  }>();
+  const [previewError, setPreviewError] = useState("");
+  useEffect(() => {
+    if (!published) return;
+    let active = true;
+    setPreviewError("");
+    void loadLinsckerPreview(published).then(
+      (snapshot) => {
+        if (active) setLocalCollection({ base: published, snapshot });
+      },
+      (error: unknown) => {
+        if (active)
+          setPreviewError(
+            error instanceof Error
+              ? error.message
+              : "Falha ao carregar obras de Linscker.",
+          );
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [published]);
+  const snapshot =
+    localCollection && localCollection.base === published
+      ? localCollection.snapshot
+      : published;
   const works =
     snapshot && snapshot.exhibition.status === "published"
       ? selectArtworks(snapshot)
@@ -46,6 +76,11 @@ export default function App() {
         </div>
       )}
 
+      {previewError && (
+        <p className="local-preview-link" role="alert">
+          {previewError}
+        </p>
+      )}
       {loading && (
         <main className="admin" role="status">
           Carregando acervo…

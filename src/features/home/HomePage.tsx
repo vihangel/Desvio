@@ -48,8 +48,8 @@ export default function HomePage({
           <small>EM EXPOSIÇÃO</small>
           <h2>{snapshot.exhibition.title}</h2>
           <p>
-            Esta prévia reúne projetos artísticos documentados. Os painéis são
-            editoriais e não reproduzem as obras originais.
+            Esta mostra de pesquisa reúne projetos documentados, painéis
+            editoriais e imagens de catálogo para experimentar a montagem.
           </p>
           <span>
             {snapshot.rooms.length} salas · {artists.length} artistas ·{" "}

@@ -68,6 +68,6 @@ A integração remota ainda depende de identificar o projeto Supabase e implemen
 
 ## Prévia local de Linscker
 
-Com `npm run dev`, acesse `/previa/linscker` ou use “Abrir prévia das obras” na página inicial. A montagem mostra **Além das Amarras**, **A Neca da Boneca** e **Retificada**, com ficha resumida, fonte e acesso direto à posição de cada obra no museu 3D. As imagens preservam a proporção na moldura.
+As obras **Além das Amarras**, **A Neca da Boneca** e **Retificada** aparecem no museu principal, no catálogo e no perfil de Linscker, tanto no desenvolvimento quanto no site publicado. A montagem é uma sobreposição de demonstração com créditos e fontes; não modifica os rascunhos persistidos nem registra licença de reprodução.
 
-A prévia não altera o acervo publicado nem os rascunhos locais. A rota e o carregamento dessas imagens são exclusivos do desenvolvimento; a aprovação de reprodução pública ainda precisa ser registrada.
+Com `npm run dev`, `/previa/linscker` também oferece uma montagem dedicada e acesso direto a cada obra. As imagens de catálogo são incluídas no build de produção e preservam a proporção original.
