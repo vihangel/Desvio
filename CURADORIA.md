@@ -35,3 +35,15 @@ O acervo precisa permitir correções, atualização e retirada de conteúdo. A 
 - Estado de exposição e datas **simulados**, armazenados apenas no navegador.
 
 Pendências principais: Supabase Auth + RLS, Storage, aprovação curatorial, upload persistente de GLB/vídeo/áudio, editor visual de pontos expositivos, validação de acessibilidade e autorização dos direitos.
+
+## Prévia local de obras de Linscker
+
+A rota de desenvolvimento `/previa/linscker` contém uma montagem temporária com três imagens do catálogo [Entre Fios & Tramas — TRANSgressões de Gênero](https://www.transgressoesdegenero.com/galeria/):
+
+- [Além das Amarras](https://www.transgressoesdegenero.com/obras/3/), 2024, técnica mista, 59 × 111 cm. PNG fornecido pelo usuário.
+- [A Neca da Boneca](https://www.transgressoesdegenero.com/obras/1/), 2023, técnica mista, 175 × 182 cm. PNG obtido do catálogo.
+- [Retificada](https://www.transgressoesdegenero.com/obras/2/), 2023, técnica mista, 33 × 24 cm. PNG obtido do catálogo.
+
+As imagens são representações das obras disponíveis no catálogo, não os painéis editoriais SVG do Desvio. Os textos são sínteses editoriais; ano, técnica, dimensões e materiais foram conferidos nas páginas de origem. Crédito fotográfico individual não identificado nessas páginas.
+
+A montagem não modifica o seed público nem os rascunhos persistidos, e as mídias têm estado de direitos `preview`, bloqueado na validação de publicação. A autorização de reprodução pública permanece pendente. Os arquivos ficam em `src/assets/linscker/`; são imagens de catálogo de 270 × 295 pixels, suficientes para testar a composição, mas não arquivos de exposição em alta resolução.

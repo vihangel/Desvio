@@ -1,26 +1,32 @@
 {
   "name": "desvio",
   "private": true,
-  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "format": "prettier --write src tests docs package.json tsconfig.json vite.config.ts",
+    "format:check": "prettier --check src tests docs package.json tsconfig.json vite.config.ts",
+    "check": "npm run format:check && npm test && npm run build"
   },
   "dependencies": {
-    "@react-three/fiber": "^9.3.0",
     "@react-three/drei": "^10.7.6",
-    "three": "^0.180.0",
+    "@react-three/fiber": "^9.3.0",
+    "lucide-react": "^0.468.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "lucide-react": "^0.468.0"
+    "three": "^0.180.0",
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/three": "^0.180.0",
+    "prettier": "3.9.10",
     "typescript": "^5.9.3",
-    "vite": "^7.1.12"
+    "vite": "^7.1.12",
+    "vitest": "5.0.4"
   }
 }
