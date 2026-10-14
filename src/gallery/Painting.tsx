@@ -5,7 +5,9 @@ import type { Artwork } from "../domain/entities";
 export default function Painting({
   art,
   onSelect,
+  densityScale = 1,
 }: {
+  densityScale?: number;
   art: Artwork;
   onSelect: (a: Artwork) => void;
 }) {
@@ -15,7 +17,7 @@ export default function Painting({
     <group
       position={art.placement.position}
       rotation={art.placement.rotation}
-      scale={Math.min(...art.placement.scale)}
+      scale={Math.min(...art.placement.scale) * densityScale}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(art);

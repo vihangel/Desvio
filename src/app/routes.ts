@@ -4,6 +4,7 @@ export const routes = {
   catalog: "/obras",
   artists: "/artistas",
   admin: "/admin",
+  reset_password: "/admin/redefinir-senha",
   preview: "/previa/linscker",
 } as const;
 export type Page = keyof typeof routes;

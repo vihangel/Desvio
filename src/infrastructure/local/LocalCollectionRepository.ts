@@ -1,14 +1,29 @@
+import { swapMountings } from "../../domain/mounting";
+import {
+  updateRoom,
+  removeRoom,
+  reflowRooms,
+} from "../../domain/roomOperations";
 import type { CollectionRepository } from "../../domain/repository";
 import type {
+  Artist,
+  ExhibitionRoom,
   CollectionState,
   Exhibition,
   RecordDraft,
 } from "../../domain/entities";
 import {
   validateExhibition,
-  validatePublication,
+  validateLiveRecord,
   validateRecord,
 } from "../../domain/validation";
+import {
+  asRecordStatus,
+  publicEdition,
+  withRecordStatuses,
+  type RecordStatus,
+} from "../../domain/publication";
+import { selectRecordDraft } from "../../domain/selectors";
 import { createSeed, fromLegacy } from "./seed";
 import { legacySchema, stateSchema } from "./schema";
 export const COLLECTION_KEY = "desvio:collection:v3";
@@ -17,13 +32,14 @@ export interface StoragePort {
   setItem(key: string, value: string): void;
 }
 export class LocalCollectionRepository implements CollectionRepository {
+  readonly mode = "demo" as const;
   private state?: CollectionState;
   constructor(private readonly storage: StoragePort) {}
   async load(): Promise<CollectionState> {
     const raw = this.storage.getItem(COLLECTION_KEY);
     if (raw) {
       try {
-        const disk = stateSchema.parse(JSON.parse(raw));
+        const disk = withRecordStatuses(stateSchema.parse(JSON.parse(raw)));
         this.assertIntegrity(disk);
         if (!this.state || disk.revision !== this.state.revision)
           this.state = disk;
@@ -92,6 +108,7 @@ export class LocalCollectionRepository implements CollectionRepository {
     for (const snapshot of [durable.draft, durable.published]) {
       snapshot.media.forEach((m) => {
         if (m.src?.startsWith("blob:")) delete m.src;
+        if (m.narration?.src?.startsWith("blob:")) delete m.narration.src;
       });
     }
     try {
@@ -119,6 +136,8 @@ export class LocalCollectionRepository implements CollectionRepository {
       );
     const next = structuredClone(this.state!);
     update(next);
+    // The site always reflects the saved works marked as published.
+    next.published = publicEdition(next.draft);
     next.revision += 1;
     this.assertIntegrity(next);
     this.persist(next);
@@ -133,11 +152,19 @@ export class LocalCollectionRepository implements CollectionRepository {
           : [...items, item];
       next.draft.records = replace(next.draft.records, {
         ...draft.record,
-        status: "draft",
+        status: asRecordStatus(draft.record.status),
       });
       next.draft.media = replace(next.draft.media, draft.media);
       next.draft.placements = replace(next.draft.placements, draft.placement);
-      next.draft.exhibition.status = "draft";
+      validateLiveRecord(draft, next.draft);
+    });
+  }
+  setRecordStatus(id: string, status: RecordStatus, revision: number) {
+    return this.mutate(revision, (next) => {
+      const record = next.draft.records.find((r) => r.id === id);
+      if (!record) throw new Error("Obra inexistente.");
+      record.status = status;
+      validateLiveRecord(selectRecordDraft(next.draft, id), next.draft);
     });
   }
   deleteRecord(id: string, revision: number) {
@@ -147,40 +174,54 @@ export class LocalCollectionRepository implements CollectionRepository {
       next.draft.placements = next.draft.placements.filter(
         (p) => p.recordId !== id,
       );
-      next.draft.exhibition.status = "draft";
     });
   }
   saveExhibition(exhibition: Exhibition, revision: number) {
     return this.mutate(revision, (next) => {
-      next.draft.exhibition = { ...exhibition, status: "draft" };
+      next.draft.exhibition = {
+        ...exhibition,
+        status: next.draft.exhibition.status,
+      };
       validateExhibition(next.draft);
     });
   }
-  submitReview(revision: number) {
+  swapPlacements(firstId: string, secondId: string, revision: number) {
     return this.mutate(revision, (next) => {
-      validatePublication(next.draft);
-      next.draft.exhibition.status = "in_review";
-      next.draft.records.forEach((r) => {
-        r.status = "in_review";
-      });
+      swapMountings(next.draft, firstId, secondId);
+    });
+  }
+  saveArtist(artist: Artist, revision: number) {
+    return this.mutate(revision, (next) => {
+      if (!artist.name.trim())
+        throw new Error("Informe o nome da pessoa artista.");
+      next.draft.artists = next.draft.artists.some((a) => a.id === artist.id)
+        ? next.draft.artists.map((a) => (a.id === artist.id ? artist : a))
+        : [...next.draft.artists, artist];
+    });
+  }
+  saveRoom(room: ExhibitionRoom, revision: number) {
+    return this.mutate(revision, (next) => {
+      updateRoom(next.draft, room);
+    });
+  }
+  deleteRoom(id: string, revision: number) {
+    return this.mutate(revision, (next) => {
+      removeRoom(next.draft, id);
+    });
+  }
+  reorderRooms(ids: string[], revision: number) {
+    return this.mutate(revision, (next) => {
+      reflowRooms(next.draft, ids);
     });
   }
   publish(revision: number) {
     return this.mutate(revision, (next) => {
-      if (next.draft.exhibition.status !== "in_review")
-        throw new Error("Envie a exposição para revisão antes de publicar.");
-      validatePublication(next.draft);
       next.draft.exhibition.status = "published";
-      next.draft.records.forEach((r) => {
-        r.status = "published";
-      });
-      next.published = structuredClone(next.draft);
     });
   }
   archive(revision: number) {
     return this.mutate(revision, (next) => {
       next.draft.exhibition.status = "archived";
-      next.published.exhibition.status = "archived";
     });
   }
   async resetDemo(revision: number) {

@@ -1,63 +1,68 @@
-# Contrato para integrar o Supabase
+# Integração Supabase
 
-## Modelo relacional recomendado
+O projeto **Desvio Museu Virtual** (`rptvhzdbenwrnhxhrfjb`) está conectado, com cinco migrações aplicadas e 10 registros publicados. Leia [MIGRACOES.md](MIGRACOES.md) para entrar, importar edições locais e configurar outra máquina.
 
-| Tabela                 | Campos e invariantes principais                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `artists`              | UUID, nome público, localização, biografia, fontes. Separada de `auth.users`.                          |
-| `profiles`             | UUID de `auth.users`; dados privados mínimos.                                                          |
-| `artist_memberships`   | Usuário vinculado a artista; vínculo concedido pela administração.                                     |
-| `user_roles`           | Papéis de curadoria/admin, com escrita administrativa protegida.                                       |
-| `records`              | Identidade estável do registro, responsável pela submissão.                                            |
-| `record_revisions`     | Conteúdo editorial versionado e estado; versão publicada não muda ao salvar rascunho.                  |
-| `record_artists`       | Revisão, artista, função e ordem; FK e unicidade.                                                      |
-| `media_assets`         | Revisão, bucket, path, tipo, MIME, tamanho, alt, créditos, condições e referência de autorização.      |
-| `exhibitions`          | UUID, slug único, título, datas, estado e revisão publicada.                                           |
-| `exhibition_revisions` | Composição aprovada da exposição; não seguir automaticamente o último rascunho de um registro.         |
-| `exhibition_rooms`     | Revisão de exposição, UUID da sala, ordem, template e versão do template.                              |
-| `placements`           | Revisão, sala, mídia e revisão do registro; slot, vetores e escala. Unicidade em `(room_id, slot_id)`. |
-| `editorial_events`     | Transições, autor, data e motivo; escrita via operação autorizada.                                     |
+O Supabase é a fonte padrão do admin e do museu. Login usa Auth; permissões usam vínculos privados de curadoria e RLS. Cadastro de conta não concede acesso editorial, exceto ao e-mail reservado e confirmado para o primeiro administrador. `user_metadata` não participa da autorização.
 
-Gerar migrations pelo CLI quando o projeto for definido, e gerar tipos TypeScript a partir do banco. Os tipos gerados pertencem à infraestrutura; os componentes usam entidades do domínio e projeções mapeadas pelo adaptador.
+Rascunho e publicação são edições independentes. Salvar não altera o museu público: envie para revisão e publique. Operações usam revisão esperada e bloqueio transacional; conflitos exigem recarregar. Arquivar retira a edição da leitura pública.
 
-## Operações e fronteiras
+## Arquivos e montagem
 
-Implementar `CollectionRepository` em `infrastructure/supabase`. Substituir o serviço no composition root (`src/app/services.ts`). Para produção, separar consultas públicas de consultas administrativas: nunca baixar todos os rascunhos no bundle/snapshot de um visitante.
+- Imagens: PNG/JPEG/WebP até 5 MB no remoto; GLB 2.0, STL ou OBJ até 24 MB.
+- GLBs devem incorporar buffers e texturas, sem referências a arquivos externos. O cliente verifica cabeçalho e estrutura básica; o Storage restringe tamanho e MIME, mas não inspeciona polígonos nem executa um antivírus.
+- O banco persiste `bucket/path`, nunca a URL assinada. O adaptador resolve URLs de uma hora ao carregar o acervo. Recarregue após expiração; uma URL já emitida pode continuar válida até expirar mesmo após arquivamento.
+- Uploads têm nomes novos e não sobrescrevem arquivos de edições existentes. Arquivos abandonados ficam privados; sua exclusão deve ser feita pelo operador após verificar referências. As políticas bloqueiam exclusão de arquivos vinculados.
+- Quadro aceita imagem; pedestal/chão aceitam modelos GLB/STL/OBJ. O pedestal é gerado pelo site e não precisa ser enviado junto.
+- Salas: 1–24 módulos de corredor, cada módulo mantém 10 × 12 m e altura de 4 m. Dimensões livres e plantas arbitrárias ainda não estão implementadas.
+- Capacidade configurável: 1–6 quadros por parede e 0–4 posições 3D. A escala visual dos quadros se adapta à densidade sugerida. Ajustes manuais podem exigir conferir sobreposições na prévia.
+- O formulário edita uma mídia e uma montagem por obra na exposição atual. Múltiplas exposições simultâneas e múltiplas mídias na mesma obra ainda não têm interface.
 
-O snapshot atual é uma interface de coordenação do MVP local, não um plano para armazenar o banco inteiro em JSON. Adaptar consultas por exposição, paginar o catálogo e resolver mídia conforme visibilidade. Evoluir o contrato de carregamento quando houver múltiplas exposições.
+## Estrutura e permissões
 
-Salvar registro + créditos + mídia + posicionamento precisa ser uma transação. Usar uma função/RPC com permissões do chamador e verificação de revisão. Publicar exige permissão curatorial, validação server-side, autorização de mídia quando necessária e referência às revisões aprovadas. Retirada de autorização deve bloquear também o acesso à mídia, inclusive em exposições que a referenciam.
+`desvio_collections` mantém revisão e ponteiros para edições. `desvio_versions` guarda o cabeçalho da exposição; artistas, registros, mídias, salas e montagens têm tabelas próprias com IDs e FKs por edição. Conteúdo editorial extensível fica em JSONB por entidade, não em um JSON único do acervo. Autorizações privadas ficam numa tabela separada e não entram na leitura pública.
 
-## Matriz de acesso proposta
+As tabelas têm RLS. Clientes só têm SELECT; escrita ocorre na RPC. O comando privilegiado fica no schema privado, tem `search_path` fixo, EXECUTE restrito e verifica `auth.uid()` e vínculo de curadoria antes de qualquer escrita. A função pública é SECURITY INVOKER. Eventos editoriais são registrados na mesma transação.
 
-| Ação                      | Visitante | Artista vinculado | Curadoria | Admin |
-| ------------------------- | --------- | ----------------- | --------- | ----- |
-| Ler publicado             | Sim       | Sim               | Sim       | Sim   |
-| Ler rascunhos             | Não       | Próprios          | Sim       | Sim   |
-| Editar rascunho           | Não       | Próprios          | Sim       | Sim   |
-| Enviar para revisão       | Não       | Próprios          | Sim       | Sim   |
-| Aprovar/publicar/arquivar | Não       | Não               | Sim       | Sim   |
-| Conceder papel ou vínculo | Não       | Não               | Não       | Sim   |
+As entidades de domínio e validações de runtime são independentes do SDK. Os tipos gerados do banco ainda não foram incorporados ao adaptador; as respostas das RPCs são validadas em runtime. Não confunda esses tipos com os DTOs do domínio.
 
-Aplicar grants mínimos e RLS por operação, inclusive `USING` e `WITH CHECK` nos updates. Papéis não devem depender de `user_metadata` editável pelo usuário. Separar dados públicos de informações privadas de autorizações/perfis. Views públicas devem respeitar RLS (`security_invoker` quando apropriado). Não criar funções privilegiadas só para contornar erros de permissão.
+## Verificar após conectar
 
-## Auth e Storage
+1. Visitante: catálogo publicado, nenhum rascunho ou autorização privada.
+2. Conta sem vínculo: não consegue editar nem enviar arquivos.
+3. Curadoria: cadastro, GLB no Storage, recarga mantendo o arquivo e prévia de pedestal/chão.
+4. Duas abas: a segunda edição com revisão antiga deve falhar.
+5. Publicação: rascunho não altera edição pública; arquivamento bloqueia novas URLs assinadas.
+6. Execute os advisors no projeto real e confira as políticas do Storage.
 
-Inicializar um cliente tipado com URL e publishable key. Segredos e `service_role` nunca entram em variáveis `VITE_*`. Não habilitar um modo remoto que faça fallback silencioso para o editor demonstrativo quando login ou configuração falhar.
+Referências: [Auth](https://supabase.com/docs/reference/javascript/auth-signinwithpassword), [URLs assinadas](https://supabase.com/docs/reference/javascript/storage-from-createsignedurl), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
-Implementar Auth com estado inicial de sessão, observação de mudanças, saída e invalidação de consultas. Guardas de rota servem à navegação; RLS é a autorização real.
+## Vídeo, objetos 3D e voz do artista
 
-Manter originais/rascunhos em bucket privado. Persistir caminho, não URL assinada. Publicar derivados explicitamente autorizados ou usar URLs assinadas com duração curta; bucket público é inadequado para material que precisa de controle de retirada. Definir INSERT/SELECT/UPDATE/DELETE de `storage.objects` conforme proprietário e papel. Upsert exige as três permissões correspondentes.
+A terceira migração `20261014171252_desvio_multimedia.sql` já está aplicada. O roteiro atualizado está em [MIGRACOES.md](MIGRACOES.md).
 
-Gerar miniatura de catálogo e textura otimizada para a galeria; validar tamanho, MIME real, GLB e dimensões no servidor. O `MediaService` local é só uma preparação de preview, não uma validação de upload de produção. Implementar limites, compensação para upload sem registro salvo e limpeza de arquivos órfãos no backend.
+O formulário aceita GLB com materiais, STL e OBJ sem arquivos MTL/texturas externos. A renderização usa loaders específicos e preserva a escala proporcional, apoiando a base do objeto. Para materiais completos e melhor portabilidade, exporte GLB.
 
-## Critério de conclusão da integração
+Vídeos são links do YouTube, não HTML arbitrário nem upload de MP4. Use público ou não listado com incorporação habilitada. O adaptador remoto normaliza o link para o formato canônico. A tela na sala inicia silenciosamente apenas quando o visitante se aproxima de frente; pausa ao perder foco. O botão externo **Assistir vídeo** abre um player dedicado, com controles e opção de tela cheia; a navegação 3D fica suspensa durante a reprodução. A tela dentro da sala não captura cliques. O detalhe da obra oferece o mesmo player sem autoplay. Os controles nativos do YouTube permanecem disponíveis.
 
-1. Identificar projeto e ambiente de desenvolvimento.
-2. Criar schema/migrations e seed; gerar tipos e implementar adaptadores reais.
-3. Configurar Auth e Storage; adicionar UI de login e fluxo de submissão/revisão.
-4. Testar RLS por leitura/escrita: visitante, artista A, artista B, curadoria e admin; incluir tentativa de autopromoção e troca de proprietário.
-5. Confirmar que edição não altera versão publicada, que a publicação é transacional e que retirada bloqueia mídia e exposição.
-6. Executar advisors e testes de banco; validar navegador → serviço → banco/Storage → UI.
+Narração é um anexo independente da obra (MP3/WAV/OGG/M4A), com créditos, transcrição e autorização. Até 20 MB no remoto e 12 MB no demo. A referência documental de autorização fica na tabela privada já existente, junto com a autorização da mídia. O campo `authorized` é uma confirmação editorial e não substitui o documento. No demo, áudios e modelos enviados ficam apenas na sessão.
 
-Referências oficiais: [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [tipos gerados](https://supabase.com/docs/guides/api/rest/generating-types), [Storage](https://supabase.com/docs/guides/storage/security/access-control).
+Vídeo, áudio e voz sintetizada usam um coordenador único: iniciar outra fonte pausa a anterior; fechar o detalhe, sair de foco ou ocultar a aba interrompe a mídia correspondente. A voz do artista é iniciada pelo visitante, nunca automaticamente ao caminhar. URLs assinadas dos áudios seguem as mesmas políticas e expiração das imagens e modelos.
+
+Referência do comportamento de reprodução: [YouTube IFrame API](https://developers.google.com/youtube/iframe_api_reference). A incorporação é um iframe CSS sobre a cena, não uma textura WebGL exportável; o desempenho e a reprodução dependem da rede, do navegador e das permissões do vídeo.
+
+## Contas e senha da curadoria
+
+Não há cadastro público: a tela `/admin` só oferece login e “Esqueci minha senha”. Contas são criadas pela administração no painel do Supabase (Authentication → Users → Add user / Invite). O primeiro admin é vinculado pelo e-mail em `desvio_private.admin_bootstrap`; demais pessoas recebem papel em `desvio_memberships`.
+
+Configurar no painel:
+
+1. Authentication → Sign In / Providers → desligar **Allow new users to sign up**. Remover o botão da interface não impede cadastros pela API.
+2. Authentication → URL Configuration → adicionar `https://<domínio>/admin/redefinir-senha` (e `http://localhost:5173/admin/redefinir-senha` para desenvolvimento) em **Redirect URLs**.
+
+O link de redefinição abre `/admin/redefinir-senha`; o cliente Supabase lê o link, abre uma sessão temporária e a pessoa só digita a nova senha.
+
+## Status das obras
+
+Cada obra tem status **Publicada**, **Rascunho** ou **Desativada**. Toda operação do editor regrava a edição pública a partir das obras publicadas (`20261014210000_desvio_record_status.sql`), então salvar uma obra publicada atualiza o site imediatamente. “Tirar exposição do ar” esvazia o site sem mudar o status das obras. A migration converte o acervo atual: obras que estavam no site viram Publicada, as demais Rascunho.
+
+Para trazer um acervo salvo no modo demonstrativo, aplicar `20261014200000_desvio_replace_draft_from_local.sql` e `20261014210000_desvio_record_status.sql`. A importação substitui as obras salvas; as que estiverem com status Publicada vão para o site.

@@ -1,0 +1,76 @@
+.viewer {
+  height: calc(100vh - 76px);
+  position: relative;
+  background: #d6d0c7;
+}
+.viewer canvas {
+  display: block;
+}
+.scene-title {
+  position: absolute;
+  top: 24px;
+  left: 30px;
+  pointer-events: none;
+  color: var(--color-text);
+}
+.scene-title h2 {
+  font-family: Georgia, serif;
+  font-size: 36px;
+  font-weight: 400;
+  margin: 4px 0;
+}
+.scene-title p {
+  margin: 0;
+}
+.crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  color: var(--color-text);
+  font-size: 26px;
+}
+.help {
+  position: absolute;
+  bottom: 28px;
+  left: 25px;
+  background: #f9f5e9e6;
+  padding: 13px 18px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+}
+.guide-toggle {
+  position: absolute;
+  right: 25px;
+  bottom: 25px;
+  background: var(--color-ink);
+  border: 0;
+  color: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tour {
+  position: absolute;
+  top: 23px;
+  right: 25px;
+  width: 280px;
+  padding: 22px;
+  background: #f7f4eeec;
+  border-radius: 8px;
+}
+.tour h3 {
+  font-family: Georgia, serif;
+  font-size: 25px;
+}
+.tour .actions button {
+  padding: 8px;
+  border-color: var(--color-border);
+  background: transparent;
+}

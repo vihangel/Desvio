@@ -1,5 +1,9 @@
-import { lazy, Suspense, useCallback, useState, useEffect } from "react";
-import type { Artwork, CollectionSnapshot } from "./domain/entities";
+import { useAuth } from "./features/auth/useAuth";
+import AdminLogin from "./features/auth/AdminLogin";
+import ResetPassword from "./features/auth/ResetPassword";
+import { useDemoMontage } from "./app/useDemoMontage";
+import { lazy, Suspense, useCallback, useState } from "react";
+import type { Artwork } from "./domain/entities";
 import { selectArtworks } from "./domain/selectors";
 import { useNavigation } from "./app/useNavigation";
 import { useCollection } from "./app/useCollection";
@@ -7,6 +11,10 @@ import {
   collectionRepository,
   mediaService,
   loadLinsckerPreview,
+  loadLocalDraftForMigration,
+  hasLocalDraft,
+  dataMode,
+  authService,
 } from "./app/services";
 import Header from "./shared/Header";
 import ArtworkDialog from "./shared/ArtworkDialog";
@@ -20,8 +28,11 @@ const LocalPreviewPage = import.meta.env.DEV
 const AdminPage = lazy(() => import("./features/admin/AdminPage"));
 export default function App() {
   const { page, go } = useNavigation();
-  const { state, setState, loading, error, recover } =
-    useCollection(collectionRepository);
+  const auth = useAuth(authService);
+  const { state, setState, loading, error, recover, reload } = useCollection(
+    collectionRepository,
+    `${auth.userId}:${auth.editor}`,
+  );
   const [selected, setSelected] = useState<Artwork | null>(null);
   const [guided, setGuided] = useState(false);
   const close = useCallback(() => setSelected(null), []);
@@ -29,37 +40,10 @@ export default function App() {
     close();
     go(next);
   };
-  const published = state?.published;
-  const [localCollection, setLocalCollection] = useState<{
-    base: CollectionSnapshot;
-    snapshot: CollectionSnapshot;
-  }>();
-  const [previewError, setPreviewError] = useState("");
-  useEffect(() => {
-    if (!published) return;
-    let active = true;
-    setPreviewError("");
-    void loadLinsckerPreview(published).then(
-      (snapshot) => {
-        if (active) setLocalCollection({ base: published, snapshot });
-      },
-      (error: unknown) => {
-        if (active)
-          setPreviewError(
-            error instanceof Error
-              ? error.message
-              : "Falha ao carregar obras de Linscker.",
-          );
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [published]);
-  const snapshot =
-    localCollection && localCollection.base === published
-      ? localCollection.snapshot
-      : published;
+  const { snapshot, error: previewError } = useDemoMontage(
+    state?.published,
+    dataMode === "demo",
+  );
   const works =
     snapshot && snapshot.exhibition.status === "published"
       ? selectArtworks(snapshot)
@@ -67,7 +51,7 @@ export default function App() {
   return (
     <div className="app">
       <Header go={navigate} />
-      {import.meta.env.DEV && page === "home" && (
+      {dataMode === "demo" && import.meta.env.DEV && page === "home" && (
         <div className="local-preview-link">
           <span>Obras de Linscker disponíveis para montagem local.</span>
           <button onClick={() => navigate("preview")}>
@@ -76,6 +60,11 @@ export default function App() {
         </div>
       )}
 
+      {auth.error && (
+        <p role="alert" className="admin">
+          {auth.error}
+        </p>
+      )}
       {previewError && (
         <p className="local-preview-link" role="alert">
           {previewError}
@@ -89,9 +78,12 @@ export default function App() {
       {error && (
         <main className="admin">
           <p role="alert">{error}</p>
-          <button onClick={() => void recover()}>
-            Restaurar demonstração local
-          </button>
+          <button onClick={() => void reload()}>Tentar novamente</button>
+          {dataMode === "demo" && (
+            <button onClick={() => void recover()}>
+              Restaurar demonstração local
+            </button>
+          )}
         </main>
       )}
       {!loading && !error && state && snapshot && (
@@ -138,19 +130,55 @@ export default function App() {
               />
             </Suspense>
           )}
-          {page === "admin" && (
-            <Suspense
-              fallback={<main className="admin">Carregando editor…</main>}
-            >
-              <AdminPage
-                state={state}
-                repository={collectionRepository}
-                mediaService={mediaService}
-                onChange={setState}
+          {page === "reset_password" && authService && (
+            <ResetPassword
+              service={authService}
+              signedIn={!!auth.userId}
+              loading={auth.loading}
+              onDone={() => navigate("admin")}
+              onLogin={() => navigate("admin")}
+            />
+          )}
+          {page === "admin" &&
+            dataMode === "supabase" &&
+            !auth.editor &&
+            authService &&
+            (auth.loading ? (
+              <p role="status">Conferindo acesso…</p>
+            ) : (
+              <AdminLogin
+                service={authService}
+                signedIn={!!auth.userId}
+                accountEmail={auth.email}
                 onExit={() => navigate("home")}
               />
-            </Suspense>
-          )}
+            ))}
+          {page === "admin" &&
+            (dataMode === "demo" || (!auth.loading && auth.editor)) && (
+              <Suspense
+                fallback={<main className="admin">Carregando editor…</main>}
+              >
+                <AdminPage
+                  loadLocalDraft={
+                    hasLocalDraft() ? loadLocalDraftForMigration : undefined
+                  }
+                  state={state}
+                  repository={collectionRepository}
+                  mediaService={mediaService}
+                  onChange={setState}
+                  onExit={() => navigate("home")}
+                  accountEmail={auth.email}
+                  onSignOut={
+                    authService
+                      ? () => {
+                          void authService?.signOut();
+                          navigate("home");
+                        }
+                      : undefined
+                  }
+                />
+              </Suspense>
+            )}
           {page === "not_found" && (
             <main className="admin">
               <h1>Página não encontrada</h1>

@@ -1,5 +1,5 @@
 import type { GalleryNavigation } from "../../gallery/types";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useCallback } from "react";
 import { Compass, Info } from "lucide-react";
 import type { Artwork, ExhibitionRoom } from "../../domain/entities";
 import MobileJoystick from "./MobileJoystick";
@@ -19,6 +19,14 @@ export default function VisitPage({
   initialGuided: boolean;
   initialWorkId?: string;
 }) {
+  const [focusedVideo, setFocusedVideo] = useState<Artwork | null>(null);
+  const videoFocus = useCallback(
+    (art: Artwork, focused: boolean) =>
+      setFocusedVideo((current) =>
+        focused ? art : current?.id === art.id ? null : current,
+      ),
+    [],
+  );
   const [room, setRoom] = useState(0);
   const [jumpTo, setJumpTo] = useState<GalleryNavigation>(() => {
     const work = works.find((w) => w.id === initialWorkId);
@@ -41,6 +49,7 @@ export default function VisitPage({
           jumpTo={jumpTo}
           onSelect={onSelect}
           onRoom={setRoom}
+          onVideoFocus={videoFocus}
           enabled={!disabled}
         />
       </Suspense>
@@ -56,6 +65,14 @@ export default function VisitPage({
         ))}
       </div>
       <MobileJoystick disabled={disabled} />
+      {focusedVideo && !disabled && (
+        <div className="video-watch-action">
+          <span>{focusedVideo.title}</span>
+          <button onClick={() => onSelect(focusedVideo)}>
+            Ampliar vídeo e ver detalhes
+          </button>
+        </div>
+      )}
       {activeRoom && (
         <div className="scene-title">
           <small>

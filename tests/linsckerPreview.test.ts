@@ -53,10 +53,12 @@ describe("local Linscker preview", () => {
       ).not.toThrow();
     }
   });
-  it("blocks editorial publication of local preview images", () => {
-    expect(() =>
-      validatePublication(createLinsckerPreview(createSeed().published)),
-    ).toThrow("prévia local");
+  it("keeps local preview works out of the public edition until published", () => {
+    const preview = createLinsckerPreview(createSeed().published);
+    expect(() => validatePublication(preview)).not.toThrow();
+    expect(
+      preview.records.filter((r) => r.status !== "published").length,
+    ).toBeGreaterThan(0);
   });
   it("opens the preview route during local development", () => {
     expect(pageForPath("/previa/linscker")).toBe("preview");

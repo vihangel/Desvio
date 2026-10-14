@@ -1,3 +1,4 @@
+import { publicEdition } from "../../domain/publication";
 import {
   artists as legacyArtists,
   artworks as legacyWorks,
@@ -98,10 +99,9 @@ export function fromLegacy(works: LegacyArtwork[]): CollectionSnapshot {
 }
 export function createSeed(): CollectionState {
   const draft = fromLegacy(legacyWorks);
-  const published = structuredClone(draft);
-  published.exhibition.status = "published";
-  published.records.forEach((r) => {
+  draft.exhibition.status = "published";
+  draft.records.forEach((r) => {
     r.status = "published";
   });
-  return { version: 3, revision: 0, draft, published };
+  return { version: 3, revision: 0, draft, published: publicEdition(draft) };
 }

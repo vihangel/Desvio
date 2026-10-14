@@ -1,6 +1,14 @@
+import type {
+  Presentation,
+  EDITORIAL_STATUSES,
+  RIGHTS,
+  MEDIA_TYPES,
+  ModelFormat,
+} from "./constants";
 export type Id = string;
-export type EditorialStatus = "draft" | "in_review" | "published" | "archived";
-export type Rights = "reference" | "demo" | "licensed" | "preview";
+export type EditorialStatus = (typeof EDITORIAL_STATUSES)[number];
+export type Rights = (typeof RIGHTS)[number];
+export type MediaType = (typeof MEDIA_TYPES)[number];
 export type Vector3 = [number, number, number];
 export interface Artist {
   id: Id;
@@ -30,10 +38,20 @@ export interface CollectionRecord {
   creditNote: string;
   status: EditorialStatus;
 }
+export interface ArtistAudio {
+  src?: string;
+  bucket?: string;
+  path?: string;
+  credits: string;
+  transcript: string;
+  authorized: boolean;
+}
 export interface MediaAsset {
+  modelFormat?: ModelFormat;
+  narration?: ArtistAudio;
   id: Id;
   recordId: Id;
-  type: "image" | "model";
+  type: MediaType;
   // Local/demo assets use src; a remote adapter resolves bucket/path at read time.
   src?: string;
   bucket?: string;
@@ -49,6 +67,9 @@ export interface ExhibitionRoom {
   subtitle: string;
   template: "corridor";
   order: number;
+  wallSlots?: number;
+  pedestalSlots?: number;
+  artistIds?: Id[];
 }
 export interface Placement {
   id: Id;
@@ -56,6 +77,7 @@ export interface Placement {
   recordId: Id;
   mediaId: Id;
   slotId: string;
+  presentation?: Presentation;
   position: Vector3;
   rotation: Vector3;
   scale: Vector3;
@@ -94,9 +116,12 @@ export interface Artwork {
   year: number | null;
   room: number;
   roomId: Id;
-  type: "image" | "model";
+  type: MediaType;
   image?: string;
   modelUrl?: string;
+  modelFormat?: ModelFormat;
+  videoUrl?: string;
+  narration?: ArtistAudio;
   description: string;
   source?: string;
   kind: string;

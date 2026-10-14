@@ -1,0 +1,86 @@
+@media (pointer: coarse) {
+  .viewer {
+    height: calc(100dvh - 76px);
+    overflow: hidden;
+  }
+  .viewer canvas {
+    touch-action: none;
+  }
+  .mobile-controls {
+    display: flex;
+    position: absolute;
+    left: 16px;
+    bottom: calc(22px + env(safe-area-inset-bottom));
+    align-items: flex-end;
+    gap: 14px;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .joystick {
+    height: 126px;
+    width: 126px;
+    border: 2px solid #ffffff91;
+    border-radius: 50%;
+    background: #0b0b0b55;
+    position: relative;
+    touch-action: none;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .joystick:before {
+    content: "";
+    position: absolute;
+    inset: 24px;
+    border: 1px solid #ffffff50;
+    border-radius: 50%;
+  }
+  .joystick-stick {
+    width: 55px;
+    height: 55px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border-radius: 50%;
+    background: #f1e8d2c9;
+    border: 2px solid #ffffffb5;
+    box-shadow: 0 3px 12px #0b0b0b44;
+    pointer-events: none;
+  }
+  .look-hint {
+    font-size: 11px;
+    max-width: 120px;
+    color: var(--color-text);
+    background: #f5f0e3c9;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 12px;
+    pointer-events: none;
+  }
+  .help {
+    display: none;
+  }
+  .guide-toggle {
+    bottom: calc(26px + env(safe-area-inset-bottom));
+    right: 14px;
+    max-width: 160px;
+    justify-content: center;
+  }
+  .tour {
+    top: 12px;
+    right: 12px;
+    bottom: auto;
+    width: min(270px, 72vw);
+  }
+  .scene-title h2 {
+    font-size: 25px;
+  }
+  .scene-title p {
+    font-size: 11px;
+    max-width: 180px;
+  }
+  .crosshair {
+    opacity: 0.4;
+  }
+}
+/* Curadoria e gestão mock */

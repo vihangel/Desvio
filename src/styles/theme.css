@@ -1,0 +1,48 @@
+.editor-panel fieldset,
+.room-admin fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.editor-panel select[multiple] {
+  min-height: 5rem;
+}
+
+/* Red is an accent; small text uses a darker shade for contrast. */
+button,
+a,
+input,
+select,
+textarea {
+  accent-color: var(--color-accent-text);
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 3px;
+}
+nav button:hover,
+.outline:hover,
+.artist-work-link:hover {
+  color: var(--color-accent-text);
+}
+.primary:hover,
+.guide-toggle:hover {
+  background: #292929;
+}
+.room-picker button.active,
+.admin-tabs button.active {
+  border-color: var(--color-accent);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+.public-work-card:hover {
+  border-color: var(--color-accent);
+}

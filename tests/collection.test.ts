@@ -18,19 +18,43 @@ class MemoryStorage implements StoragePort {
   }
 }
 describe("collection repository", () => {
-  it("preserves the public version until review and publication", async () => {
+  it("publishes edits of published works right away and hides drafts", async () => {
     const repo = new LocalCollectionRepository(new MemoryStorage());
     let state = await repo.load();
     const edit = selectRecordDraft(state.draft, state.draft.records[0].id);
     edit.record.title = "Novo título";
     state = await repo.saveRecord(edit, state.revision);
-    expect(state.published.records[0].title).not.toBe("Novo título");
-    await expect(repo.publish(state.revision)).rejects.toThrow("revisão");
-    state = await repo.submitReview(state.revision);
-    state = await repo.publish(state.revision);
+    const onSite = () =>
+      state.published.records.find((r) => r.id === edit.record.id);
+    expect(onSite()?.title).toBe("Novo título");
+    state = await repo.setRecordStatus(edit.record.id, "draft", state.revision);
+    expect(onSite()).toBeUndefined();
     expect(
-      state.published.records.find((r) => r.id === edit.record.id)?.title,
-    ).toBe("Novo título");
+      state.draft.records.find((r) => r.id === edit.record.id)?.status,
+    ).toBe("draft");
+    state = await repo.setRecordStatus(
+      edit.record.id,
+      "archived",
+      state.revision,
+    );
+    expect(onSite()).toBeUndefined();
+    state = await repo.setRecordStatus(
+      edit.record.id,
+      "published",
+      state.revision,
+    );
+    expect(onSite()?.title).toBe("Novo título");
+  });
+  it("refuses to publish a work without description", async () => {
+    const repo = new LocalCollectionRepository(new MemoryStorage());
+    const state = await repo.load();
+    const edit = selectRecordDraft(state.draft, state.draft.records[0].id);
+    edit.record.description = " ";
+    await expect(repo.saveRecord(edit, state.revision)).rejects.toThrow(
+      "descrição",
+    );
+    edit.record.status = "draft";
+    await expect(repo.saveRecord(edit, state.revision)).resolves.toBeTruthy();
   });
   it("rejects a slot occupied by another record", async () => {
     const repo = new LocalCollectionRepository(new MemoryStorage());
@@ -81,14 +105,14 @@ describe("collection repository", () => {
     ).rejects.toThrow("salvar");
     expect((await repo.load()).draft.records).toHaveLength(7);
   });
-  it("deletes related draft media and placements but keeps publication", async () => {
+  it("deletes a work with its media and placement, also from the site", async () => {
     const repo = new LocalCollectionRepository(new MemoryStorage());
     let state = await repo.load();
     const id = state.draft.records[0].id;
     state = await repo.deleteRecord(id, state.revision);
     expect(state.draft.media.some((m) => m.recordId === id)).toBe(false);
     expect(state.draft.placements.some((p) => p.recordId === id)).toBe(false);
-    expect(state.published.records.some((r) => r.id === id)).toBe(true);
+    expect(state.published.records.some((r) => r.id === id)).toBe(false);
   });
   it("migrates v2 into a draft without making local edits public", async () => {
     const storage = new MemoryStorage();
@@ -118,12 +142,15 @@ describe("collection repository", () => {
     let state = await repo.load();
     const model = selectRecordDraft(state.draft, state.draft.records[6].id);
     model.media.src = "blob:session";
+    await expect(repo.saveRecord(model, state.revision)).rejects.toThrow(
+      "persistente",
+    );
+    model.record.status = "draft";
     state = await repo.saveRecord(model, state.revision);
     expect(state.draft.media.find((m) => m.id === model.media.id)?.src).toBe(
       "blob:session",
     );
     expect(storage.getItem(COLLECTION_KEY)).not.toContain("blob:session");
-    expect(() => validatePublication(state.draft)).toThrow("persistente");
   });
 });
 describe("domain and navigation", () => {
@@ -167,15 +194,43 @@ describe("publication invariants", () => {
     state.draft.exhibition.endsAt = "2026-10-01";
     expect(() => validatePublication(state.draft)).toThrow("encerramento");
   });
-  it("requires new review after an edit to reviewed content", async () => {
+  it("takes the exhibition off air and back without losing work statuses", async () => {
     const repo = new LocalCollectionRepository(new MemoryStorage());
     let state = await repo.load();
-    state = await repo.submitReview(state.revision);
-    const record = selectRecordDraft(state.draft, state.draft.records[0].id);
-    record.record.description = "Alteração após revisão";
-    state = await repo.saveRecord(record, state.revision);
-    expect(state.draft.exhibition.status).toBe("draft");
-    await expect(repo.publish(state.revision)).rejects.toThrow("revisão");
+    state = await repo.archive(state.revision);
+    expect(state.published.exhibition.status).toBe("archived");
+    state = await repo.saveExhibition(
+      { ...state.draft.exhibition, title: "Outro título" },
+      state.revision,
+    );
+    expect(state.draft.exhibition.status).toBe("archived");
+    state = await repo.publish(state.revision);
+    expect(state.published.exhibition.status).toBe("published");
+    expect(state.published.records).toHaveLength(state.draft.records.length);
+  });
+  it("converts a browser state saved before per-work status", async () => {
+    const storage = new MemoryStorage();
+    const legacy = createSeed();
+    legacy.draft.exhibition.status = "draft";
+    legacy.draft.records.forEach((r) => {
+      r.status = "draft";
+    });
+    const extra = legacy.published.records.pop()!;
+    legacy.published.placements = legacy.published.placements.filter(
+      (p) => p.recordId !== extra.id,
+    );
+    legacy.published.media = legacy.published.media.filter(
+      (m) => m.recordId !== extra.id,
+    );
+    storage.setItem(COLLECTION_KEY, JSON.stringify(legacy));
+    const state = await new LocalCollectionRepository(storage).load();
+    expect(state.draft.exhibition.status).toBe("published");
+    expect(state.draft.records.find((r) => r.id === extra.id)?.status).toBe(
+      "draft",
+    );
+    expect(
+      state.draft.records.filter((r) => r.status === "published"),
+    ).toHaveLength(legacy.draft.records.length - 1);
   });
   it("refreshes an existing repository when another tab changes the revision", async () => {
     const storage = new MemoryStorage();

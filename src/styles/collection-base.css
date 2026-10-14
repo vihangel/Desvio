@@ -1,0 +1,59 @@
+.admin h1 {
+  font-family: Georgia, serif;
+  font-size: 56px;
+  font-weight: 400;
+}
+.admin > p {
+  color: var(--color-muted);
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 42px 0;
+}
+.metrics > div {
+  background: #e8e7e0;
+  padding: 22px;
+  border-radius: 8px;
+}
+.metrics small,
+.metrics b {
+  display: block;
+}
+.metrics b {
+  font-size: 34px;
+  margin-top: 9px;
+}
+.works {
+  display: grid;
+  gap: 7px;
+}
+.works button {
+  border: 1px solid #e0ddd5;
+  background: #fffdfa;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 18px;
+  border-radius: 7px;
+}
+.works img,
+.thumb {
+  width: 62px;
+  height: 62px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #d6c6b4;
+  display: grid;
+  place-items: center;
+}
+.works button span:nth-child(2) {
+  flex: 1;
+}
+.works small {
+  display: block;
+  color: var(--color-muted);
+  margin-top: 5px;
+}

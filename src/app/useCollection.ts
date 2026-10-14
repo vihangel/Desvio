@@ -1,31 +1,56 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CollectionState } from "../domain/entities";
 import type { CollectionRepository } from "../domain/repository";
-export function useCollection(repository: CollectionRepository) {
+export function useCollection(
+  repository: CollectionRepository,
+  accessKey = "",
+) {
   const [state, setState] = useState<CollectionState>();
+  const [loadedKey, setLoadedKey] = useState(accessKey);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const request = useRef(0);
   const reload = useCallback(async () => {
+    const token = ++request.current;
     setLoading(true);
+    setState(undefined);
+    setError("");
     try {
-      setState(await repository.load());
-      setError("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha ao carregar o acervo.");
+      const next = await repository.load();
+      if (token === request.current) {
+        setState(next);
+        setLoadedKey(accessKey);
+      }
+    } catch (error) {
+      if (token === request.current)
+        setError(
+          error instanceof Error ? error.message : "Falha ao carregar acervo.",
+        );
     } finally {
-      setLoading(false);
+      if (token === request.current) setLoading(false);
     }
-  }, [repository]);
+  }, [repository, accessKey]);
   useEffect(() => {
     void reload();
+    return () => {
+      request.current++;
+    };
   }, [reload]);
   const recover = async () => {
     try {
       setState(await repository.resetDemo(state?.revision ?? 0));
+      setLoadedKey(accessKey);
       setError("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha ao restaurar.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Falha ao restaurar.");
     }
   };
-  return { state, setState, loading, error, reload, recover };
+  return {
+    state: loadedKey === accessKey ? state : undefined,
+    setState,
+    loading,
+    error,
+    reload,
+    recover,
+  };
 }

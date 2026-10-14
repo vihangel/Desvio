@@ -12,15 +12,22 @@
     "check": "npm run format:check && npm test && npm run build"
   },
   "dependencies": {
+    "@gltf-transform/core": "4.5.0",
+    "@gltf-transform/extensions": "4.5.0",
+    "@gltf-transform/functions": "4.5.0",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.3.0",
+    "@supabase/supabase-js": "2.117.3",
+    "@vercel/analytics": "^2.0.1",
     "lucide-react": "^0.468.0",
+    "meshoptimizer": "1.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "three": "^0.180.0",
     "zod": "4.6.6"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.9",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/three": "^0.180.0",

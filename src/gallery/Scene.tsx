@@ -1,3 +1,4 @@
+import VideoArtwork from "./VideoArtwork";
 import type { GalleryNavigation } from "./types";
 import { Suspense } from "react";
 import { Text, Html } from "@react-three/drei";
@@ -9,6 +10,7 @@ import Wall from "./Wall";
 import AssetBoundary from "./AssetBoundary";
 export default function Scene({
   onSelect,
+  onVideoFocus,
   onRoom,
   enabled,
   works,
@@ -16,6 +18,7 @@ export default function Scene({
   rooms,
 }: {
   onSelect: (a: Artwork) => void;
+  onVideoFocus: (art: Artwork, focused: boolean) => void;
   onRoom: (r: number) => void;
   enabled: boolean;
   works: Artwork[];
@@ -28,7 +31,12 @@ export default function Scene({
       <ambientLight intensity={1.1} />
       <hemisphereLight intensity={1.1} />
       <directionalLight position={[3, 7, 2]} intensity={1.8} castShadow />
-      <Player enabled={enabled} onRoom={onRoom} jumpTo={jumpTo} />
+      <Player
+        roomCount={rooms.length}
+        enabled={enabled}
+        onRoom={onRoom}
+        jumpTo={jumpTo}
+      />
       {rooms.map((room, i) => {
         const z = -room.order * 12;
         return (
@@ -71,8 +79,19 @@ export default function Scene({
                       </Html>
                     }
                   >
-                    {a.type === "image" && a.image ? (
-                      <Painting art={a} onSelect={onSelect} />
+                    {a.type === "video" && a.videoUrl ? (
+                      <VideoArtwork
+                        art={a}
+                        onVideoFocus={onVideoFocus}
+                        enabled={enabled}
+                        onSelect={onSelect}
+                      />
+                    ) : a.type === "image" && a.image ? (
+                      <Painting
+                        art={a}
+                        onSelect={onSelect}
+                        densityScale={Math.min(1, 3 / (room.wallSlots ?? 3))}
+                      />
                     ) : (
                       <Sculpture art={a} onClick={() => onSelect(a)} />
                     )}
@@ -82,7 +101,10 @@ export default function Scene({
           </group>
         );
       })}
-      {[-6, -18].map((z) => (
+      {Array.from(
+        { length: Math.max(0, rooms.length - 1) },
+        (_, i) => -6 - i * 12,
+      ).map((z) => (
         <group key={z}>
           <Wall x={-3.35} y={2} z={z} w={3.3} h={4} d={0.22} />
           <Wall x={3.35} y={2} z={z} w={3.3} h={4} d={0.22} />
@@ -90,7 +112,7 @@ export default function Scene({
         </group>
       ))}
       <Wall x={0} y={2} z={6} w={10} h={4} d={0.2} />
-      <Wall x={0} y={2} z={-30} w={10} h={4} d={0.2} />
+      <Wall x={0} y={2} z={6 - rooms.length * 12} w={10} h={4} d={0.2} />
     </>
   );
 }

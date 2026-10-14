@@ -1,37 +1,87 @@
+import AudioFields from "./AudioFields";
 import type { CollectionSnapshot, RecordDraft } from "../../domain/entities";
-import { roomSlots } from "../../domain/slots";
+import {
+  RECORD_STATUSES,
+  asRecordStatus,
+  recordStatusHints,
+  recordStatusLabels,
+} from "../../domain/publication";
+import PlacementFields from "./PlacementFields";
+import MediaFields from "./MediaFields";
 type Props = {
   draft: RecordDraft;
   snapshot: CollectionSnapshot;
+  dirty: boolean;
   busy: boolean;
+  remote: boolean;
   onChange: (draft: RecordDraft) => void;
-  onPlace: (roomId: string, slotId?: string, type?: "image" | "model") => void;
+  onPlace: (
+    roomId: string,
+    slotId?: string,
+    type?: "image" | "model" | "video",
+  ) => void;
+  onUploadAudio: (file?: File) => Promise<void>;
   onUpload: (file?: File) => Promise<void>;
-  onSave: () => Promise<void>;
+  onSave: () => Promise<boolean>;
+  onSavePreview: () => Promise<void>;
+  notice: string;
   onCancel: () => void;
+  onSwap: (id: string) => Promise<void>;
   onDelete: () => Promise<void>;
 };
 export default function RecordEditor({
   draft,
   snapshot,
+  dirty,
   busy,
+  remote,
   onChange,
   onPlace,
   onUpload,
+  onUploadAudio,
   onSave,
+  onSavePreview,
+  notice,
   onCancel,
   onDelete,
+  onSwap,
 }: Props) {
-  const { record, media, placement } = draft;
-  const room = snapshot.rooms.find((r) => r.id === placement.roomId)!;
+  const { record } = draft;
   const changeRecord = (patch: Partial<typeof record>) =>
     onChange({ ...draft, record: { ...record, ...patch } });
-  const changeMedia = (patch: Partial<typeof media>) =>
-    onChange({ ...draft, media: { ...media, ...patch } });
   const exists = snapshot.records.some((r) => r.id === record.id);
   return (
     <section className="editor-panel">
-      <h2>{exists ? "Editar registro" : "Adicionar registro"}</h2>
+      <div className="editor-title">
+        <h2>{exists ? "Editar obra" : "Nova obra"}</h2>
+        {dirty && (
+          <span className="status-pill status-unsaved">
+            Alterações não salvas
+          </span>
+        )}
+      </div>
+      <fieldset className="status-choice" disabled={busy}>
+        <legend>Status</legend>
+        <div role="radiogroup" aria-label="Status da obra">
+          {RECORD_STATUSES.map((status) => (
+            <label
+              key={status}
+              className={
+                asRecordStatus(record.status) === status ? "selected" : ""
+              }
+            >
+              <input
+                type="radio"
+                name="record-status"
+                checked={asRecordStatus(record.status) === status}
+                onChange={() => changeRecord({ status })}
+              />
+              {recordStatusLabels[status]}
+            </label>
+          ))}
+        </div>
+        <small>{recordStatusHints[asRecordStatus(record.status)]}</small>
+      </fieldset>
       <fieldset disabled={busy}>
         <label>
           Título
@@ -105,131 +155,53 @@ export default function RecordEditor({
             onChange={(e) => changeRecord({ source: e.target.value })}
           />
         </label>
-        <label>
-          Tipo de mídia
-          <select
-            value={media.type}
-            onChange={(e) =>
-              onPlace(room.id, undefined, e.target.value as "image" | "model")
-            }
-          >
-            <option value="image">Imagem</option>
-            <option value="model">Modelo GLB</option>
-          </select>
-        </label>
-        <div className="editor-two">
-          <label>
-            Sala
-            <select value={room.id} onChange={(e) => onPlace(e.target.value)}>
-              {snapshot.rooms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Posição
-            <select
-              value={placement.slotId}
-              onChange={(e) => onPlace(room.id, e.target.value)}
-            >
-              {roomSlots(room)
-                .filter((s) => s.type === media.type)
-                .map((s) => (
-                  <option
-                    key={s.id}
-                    value={s.id}
-                    disabled={snapshot.placements.some(
-                      (p) =>
-                        p.recordId !== record.id &&
-                        p.roomId === room.id &&
-                        p.slotId === s.id,
-                    )}
-                  >
-                    {s.id}
-                  </option>
-                ))}
-            </select>
-          </label>
-        </div>
-        <label>
-          {media.type === "image" ? "Imagem" : "Modelo GLB"} — endereço
-          <input
-            value={media.src?.startsWith("data:") ? "" : (media.src ?? "")}
-            placeholder={
-              media.src?.startsWith("data:")
-                ? "Imagem local selecionada"
-                : "https://…"
-            }
-            onChange={(e) => changeMedia({ src: e.target.value })}
-          />
-        </label>
-        <label className="upload-label">
-          Arquivo local
-          <input
-            type="file"
-            accept={
-              media.type === "image"
-                ? "image/png,image/jpeg,image/webp"
-                : ".glb"
-            }
-            onChange={(e) => {
-              void onUpload(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        <label>
-          Descrição acessível da mídia
-          <input
-            value={media.alt}
-            onChange={(e) => changeMedia({ alt: e.target.value })}
-          />
-        </label>
-        <label>
-          Direitos
-          <select
-            value={media.rights}
-            onChange={(e) =>
-              changeMedia({ rights: e.target.value as typeof media.rights })
-            }
-          >
-            <option value="demo">Demonstração</option>
-            <option value="reference">Painel editorial de pesquisa</option>
-            <option value="licensed">Reprodução autorizada</option>
-          </select>
-        </label>
-        <label>
-          Créditos da mídia
-          <input
-            value={media.attribution}
-            onChange={(e) => changeMedia({ attribution: e.target.value })}
-          />
-        </label>
-        {media.rights === "licensed" && (
-          <label>
-            Referência da autorização
-            <textarea
-              value={media.authorization ?? ""}
-              onChange={(e) => changeMedia({ authorization: e.target.value })}
-            />
-          </label>
+        <MediaFields
+          draft={draft}
+          onChange={onChange}
+          onPlace={onPlace}
+          onUpload={onUpload}
+          remote={remote}
+        />
+        <AudioFields
+          draft={draft}
+          onChange={onChange}
+          onUpload={onUploadAudio}
+          remote={remote}
+        />
+        <PlacementFields
+          draft={draft}
+          snapshot={snapshot}
+          onPlace={onPlace}
+          onChange={onChange}
+          onSwap={exists ? onSwap : undefined}
+        />
+        {notice && (
+          <p className="editor-feedback" role="status">
+            {notice}
+          </p>
         )}
-        <small className="editor-hint">
-          Imagens locais de até 1 MB. GLB de até 12 MB, disponível somente nesta
-          sessão. Dados e publicação são locais neste modo.
-        </small>
+        <p className="editor-hint">
+          {remote
+            ? "As alterações são gravadas no Supabase ao salvar."
+            : "Modo demonstrativo: as alterações ficam só neste navegador."}
+        </p>
         <div className="editor-actions">
-          <button className="primary" onClick={() => void onSave()}>
-            Salvar rascunho
+          <button
+            className="primary"
+            disabled={!dirty}
+            onClick={() => void onSave()}
+          >
+            {busy ? "Salvando…" : "Salvar"}
+          </button>
+          <button className="outline" onClick={() => void onSavePreview()}>
+            {dirty ? "Salvar e ver na sala 3D" : "Ver na sala 3D"}
           </button>
           <button className="outline" onClick={onCancel}>
-            Cancelar
+            {dirty ? "Descartar alterações" : "Fechar"}
           </button>
           {exists && (
             <button className="danger" onClick={() => void onDelete()}>
-              Excluir do rascunho
+              Excluir obra
             </button>
           )}
         </div>

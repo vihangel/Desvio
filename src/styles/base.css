@@ -1,0 +1,154 @@
+/* Desvio: warm exhibition surfaces, black typography and red accents. */
+:root {
+  --color-background: #f4f0e8;
+  --color-ink: #0b0b0b;
+  --color-text: #292929;
+  --color-muted: #66635f;
+  --color-border: #cdc8c0;
+  --color-accent: #ff3b1f;
+  --color-accent-text: #b92512;
+  --color-accent-soft: #fff0eb;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+button {
+  font: inherit;
+  cursor: pointer;
+}
+header {
+  height: 76px;
+  padding: 0 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f5ef;
+  border-bottom: 1px solid #dedbd2;
+  position: relative;
+  z-index: 9;
+}
+.brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: none;
+  border: 0;
+  color: var(--color-ink);
+  font-size: 29px;
+}
+.brand img {
+  display: block;
+  width: 132px;
+  height: auto;
+}
+.brand small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  max-width: 60px;
+  text-align: left;
+}
+nav {
+  display: flex;
+  gap: 30px;
+}
+nav button {
+  background: transparent;
+  border: 0;
+  color: var(--color-text);
+}
+.eyebrow,
+.scene-title small,
+.tour small,
+.feature small {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+.home,
+.admin {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 80px 32px;
+}
+.home h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(52px, 7vw, 94px);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.07;
+  margin: 22px 0;
+}
+.home h1 em {
+  color: var(--color-accent);
+}
+.home > p {
+  font-size: 19px;
+  line-height: 1.7;
+  max-width: 600px;
+  color: var(--color-muted);
+}
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.actions button,
+.primary,
+.outline {
+  border: 1px solid var(--color-ink);
+  border-radius: 5px;
+  padding: 15px 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.primary {
+  background: var(--color-ink);
+  color: white;
+}
+.outline {
+  background: transparent;
+  color: var(--color-ink);
+}
+.feature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  align-items: center;
+  background: #e9e6df;
+  margin-top: 70px;
+  padding: 40px;
+  border-radius: 12px;
+}
+.feature h2 {
+  font-family: Georgia, serif;
+  font-size: 38px;
+  font-weight: 400;
+}
+.feature p {
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+.triptych {
+  display: flex;
+  gap: 9px;
+  height: 230px;
+}
+.triptych img {
+  width: 33%;
+  object-fit: cover;
+  border-radius: 5px;
+}

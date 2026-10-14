@@ -7,7 +7,9 @@ export default function Player({
   enabled,
   onRoom,
   jumpTo,
+  roomCount,
 }: {
+  roomCount: number;
   enabled: boolean;
   onRoom: (room: number) => void;
   jumpTo: GalleryNavigation;
@@ -144,12 +146,13 @@ export default function Player({
         d.normalize().multiplyScalar(Math.min(delta, 0.05) * 3.2);
         const p = camera.position.clone().add(d);
         p.x = THREE.MathUtils.clamp(p.x, -4.65, 4.65);
-        p.z = THREE.MathUtils.clamp(p.z, -29.75, 5.7);
+        p.z = THREE.MathUtils.clamp(p.z, 6 - roomCount * 12 + 0.25, 5.7);
         if (
-          (camera.position.z > -6 && p.z <= -6) ||
-          (camera.position.z < -6 && p.z >= -6) ||
-          (camera.position.z > -18 && p.z <= -18) ||
-          (camera.position.z < -18 && p.z >= -18)
+          Array.from({ length: roomCount - 1 }, (_, i) => -6 - i * 12).some(
+            (z) =>
+              (camera.position.z > z && p.z <= z) ||
+              (camera.position.z < z && p.z >= z),
+          )
         ) {
           if (Math.abs(p.x) > 1.55) p.z = camera.position.z;
         }
@@ -160,7 +163,7 @@ export default function Player({
     const room = THREE.MathUtils.clamp(
       Math.floor((6 - camera.position.z) / 12),
       0,
-      2,
+      roomCount - 1,
     );
     if (lastRoom.current !== room) {
       lastRoom.current = room;

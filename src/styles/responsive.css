@@ -1,0 +1,53 @@
+@media (max-width: 700px) {
+  header {
+    padding: 0 15px;
+  }
+  .brand small {
+    display: none;
+  }
+  nav {
+    gap: 12px;
+    font-size: 13px;
+  }
+  .home,
+  .admin {
+    padding: 45px 22px;
+  }
+  .feature,
+  .modal {
+    grid-template-columns: 1fr;
+  }
+  .feature {
+    padding: 20px;
+  }
+  .triptych {
+    height: 150px;
+  }
+  .modal {
+    max-height: 92vh;
+    overflow: auto;
+  }
+  .visual {
+    min-height: 220px;
+    height: 220px;
+  }
+  .description {
+    padding: 25px;
+  }
+  .help {
+    font-size: 10px;
+    bottom: 85px;
+    right: 15px;
+  }
+  .tour {
+    top: auto;
+    bottom: 135px;
+    right: 15px;
+  }
+  .scene-title {
+    left: 15px;
+  }
+}
+.mobile-controls {
+  display: none;
+}

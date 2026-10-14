@@ -1,3 +1,6 @@
+import ArtistNarration from "./ArtistNarration";
+import YouTubeVideo from "./YouTubeVideo";
+import { mediaPlayback } from "./mediaPlayback";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, Pause, Volume2 } from "lucide-react";
@@ -13,6 +16,7 @@ export default function ArtworkDialog({
   const { speaking, toggle } = useNarration();
   const dialog = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    mediaPlayback.stopAll();
     const previous = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -20,8 +24,9 @@ export default function ArtworkDialog({
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
       if (e.key === "Tab") {
-        const items =
-          dialog.current?.querySelectorAll<HTMLElement>("button,a[href]");
+        const items = dialog.current?.querySelectorAll<HTMLElement>(
+          "button,a[href],audio,iframe,input,select,textarea",
+        );
         if (!items?.length) return;
         const first = items[0],
           last = items[items.length - 1];
@@ -53,7 +58,7 @@ export default function ArtworkDialog({
         role="dialog"
         aria-modal="true"
         aria-label={selected.title}
-        className="modal"
+        className={selected.videoUrl ? "modal modal-video" : "modal"}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="dialog-toolbar">
@@ -63,7 +68,13 @@ export default function ArtworkDialog({
         </div>
         <div className="dialog-content">
           <div className="visual">
-            {selected.image ? (
+            {selected.videoUrl ? (
+              <YouTubeVideo
+                url={selected.videoUrl}
+                title={selected.title}
+                autoplay
+              />
+            ) : selected.image ? (
               <img src={selected.image} alt={selected.alt} />
             ) : (
               <span>◈</span>
@@ -100,6 +111,9 @@ export default function ArtworkDialog({
               </>
             )}
 
+            {selected.narration && (
+              <ArtistNarration audio={selected.narration} />
+            )}
             <button
               className="primary"
               onClick={() =>
@@ -107,7 +121,7 @@ export default function ArtworkDialog({
               }
             >
               {speaking ? <Pause size={16} /> : <Volume2 size={16} />}{" "}
-              {speaking ? "Parar narração" : "Ouvir a obra"}
+              {speaking ? "Parar narração" : "Ouvir descrição sintetizada"}
             </button>
             <p className="disclaimer">
               Narração por voz sintetizada do navegador, sem representar a voz

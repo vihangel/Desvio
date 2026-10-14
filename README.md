@@ -17,40 +17,15 @@ npm run build
 
 Hospedagem: Vercel, framework Vite, saída `dist`, repositório `vihangel/Desvio`.
 
-## O que funciona
+## Acervo e administração
 
-- Três salas conectadas em 3D, com navegação por teclado e mouse ou joystick/touch.
-- Menu de acesso direto às salas e visita guiada por registros.
-- Fichas editoriais, links de fonte e narração por voz sintetizada.
-- Curadoria documental inicial: Linscker Marim e O Sol Ferreira.
-- Editor local separado em cadastro, créditos por artista, mídia, sala e slots sem sobreposição.
-- Inclusão de registros próprios em `localStorage`; restauração do acervo original.
-- Preview de arquivos `.glb` em pedestal, a partir de URL pública ou arquivo local durante a sessão.
-- Rascunho separado da versão publicada, com revisão, publicação e arquivamento **locais**.
-- Rotas públicas `/`, `/museu`, `/obras` e `/artistas`, com histórico e recarregamento.
-- Prévia 3D do rascunho dentro do editor.
+O admin e o museu usam Supabase por padrão: Auth, banco com RLS, edições de rascunho/publicação e Storage privado. O projeto remoto já recebeu as cinco migrações e os 10 registros do acervo, incluindo as três obras de Linscker. Consulte [docs/MIGRACOES.md](docs/MIGRACOES.md) para entrar e importar suas edições antigas.
 
-## Limitações importantes
+A rota `/admin` permite cadastrar artistas, salas, obras e montagens; enviar GLB/STL/OBJ e áudio; vincular vídeos do YouTube; revisar e publicar. A prévia administrativa mostra o rascunho. O museu público mostra a última edição publicada.
 
-**Ainda não há Supabase nem login real.** Todas as alterações do painel são locais, no navegador do visitante. Não representam publicações globais. Modelos GLB selecionados do dispositivo usam uma URL temporária que expira após recarregar; a autenticação, o Storage e a aprovação de obras serão implementados posteriormente.
+O público navega por teclado/mouse ou joystick/touch, abre detalhes e usa visita guiada. Ao se aproximar de um vídeo, pode escolher **Assistir vídeo**, com controles em player dedicado e tela cheia.
 
-**Este acervo ainda não contém reproduções autorizadas das obras.** Os cartazes gerados em `public/art/desvio-*.svg` são peças editoriais, não reproduções. Consulte [CURADORIA.md](CURADORIA.md) para as fontes e os procedimentos de autorização.
-
-## Próximas entregas
-
-1. Supabase Auth, perfis de admin e artista, permissões RLS.
-2. Galeria orientada a templates/slots e editor de posicionamento.
-3. Armazenamento persistente e conversão de imagens/GLB, vídeos e áudios.
-4. Mediação e roteiros guiados com legendas e trilhas aprovadas pelas pessoas artistas.
-5. Acessibilidade, testes em celulares e controle de desempenho/colisões.
-
-## Navegação pública e administração
-
-O público usa o menu **Início / Museu 3D / Obras / Artistas**. Não existe opção de edição nesses caminhos.
-
-A rota `/admin` abriga, temporariamente, um **editor de demonstração local**. Ela não representa autenticação ou segurança: qualquer pessoa que saiba a URL pode acessar o modo de teste, mas as edições não alteram o acervo público no servidor. Para um verdadeiro admin restrito, será obrigatório implementar Supabase Auth, RLS e persistência no banco. Não usar informações privadas no modo mock.
-
-As salas continuam como templates codificados; gestão dinâmica de criação/conexão das salas e editor de posicionamento ficam para a etapa com modelos persistentes. A imagem do painel de detalhes e a textura 3D usam a mesma mídia vinculada ao registro.
+O modo offline exige `VITE_DATA_MODE=demo`. Não há fallback local em caso de erro remoto. Reprodução de obras e narrações depende das autorizações editoriais; os painéis SVG são peças editoriais e as imagens de Linscker permanecem marcadas como prévia.
 
 ## Arquitetura e validação
 
@@ -62,12 +37,16 @@ npm run check
 
 O comando verifica formatação, testes e build. A CI instala pelo lockfile com `npm ci`.
 
-O acervo antigo (`desvio:works:v2`) é migrado para o rascunho v3; suas alterações só aparecem no catálogo público deste navegador após revisão/publicação local. A chave antiga é preservada. Dados inválidos exibem erro em vez de serem substituídos silenciosamente.
+A importação inicial preserva a cópia de `desvio:collection:v3` no navegador. Modelos e áudios temporários precisam ser reenviados. Salas, registros, mídias e posições são persistidos no banco; imagens históricas também usam arquivos estáticos do repositório.
 
-A integração remota ainda depende de identificar o projeto Supabase e implementar migrations, RLS, Auth, Storage e os adaptadores reais. Os contratos e os limites de cada camada já estão definidos; o editor local não constitui autenticação.
+## Montagem no admin
 
-## Prévia local de Linscker
+Cadastre artistas, crie e reordene salas, ajuste capacidade de paredes e objetos 3D e vincule conjuntos de artistas. Cada obra tem mídia separada de sua montagem: imagem como quadro, GLB sobre pedestal ou direto no chão, posição em metros, rotação em graus e escala proporcional. Obras do mesmo tipo podem trocar suas posições salvas em uma operação. Salas ocupadas não podem ser excluídas nem perder posições usadas.
 
-As obras **Além das Amarras**, **A Neca da Boneca** e **Retificada** aparecem no museu principal, no catálogo e no perfil de Linscker, tanto no desenvolvimento quanto no site publicado. A montagem é uma sobreposição de demonstração com créditos e fontes; não modifica os rascunhos persistidos nem registra licença de reprodução.
+A geometria é um corredor de módulos fixos; o número de salas é dinâmico. Veja as instruções e limitações de ativação em [docs/SUPABASE.md](docs/SUPABASE.md).
 
-Com `npm run dev`, `/previa/linscker` também oferece uma montagem dedicada e acesso direto a cada obra. As imagens de catálogo são incluídas no build de produção e preservam a proporção original.
+## Multimídia
+
+O admin aceita GLB, STL e OBJ, links de vídeo do YouTube e narração do artista em MP3/WAV/OGG/M4A. Vídeos usam telas na parede e prévia silenciosa por foco; o som é ativado pelo visitante. Vídeo, áudio e voz sintetizada compartilham um coordenador que mantém uma fonte ativa por vez.
+
+Para o projeto conectado **Desvio Museu Virtual**, siga [docs/MIGRACOES.md](docs/MIGRACOES.md): as cinco migrações já aplicadas, conta Auth, vínculo inicial de administrador e variáveis do site.

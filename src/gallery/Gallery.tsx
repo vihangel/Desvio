@@ -23,6 +23,7 @@ function ResponsiveCamera() {
 
 export default function Gallery(props: {
   onSelect: (a: Artwork) => void;
+  onVideoFocus: (art: Artwork, focused: boolean) => void;
   onRoom: (r: number) => void;
   enabled: boolean;
   works: Artwork[];

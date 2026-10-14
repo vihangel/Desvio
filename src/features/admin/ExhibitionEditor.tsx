@@ -2,34 +2,29 @@ import { useState } from "react";
 import type { CollectionSnapshot, Exhibition } from "../../domain/entities";
 export default function ExhibitionEditor({
   snapshot,
+  live,
   busy,
   onSave,
-  onReview,
   onPublish,
   onArchive,
 }: {
   snapshot: CollectionSnapshot;
+  live: boolean;
   busy: boolean;
   onSave: (exhibition: Exhibition) => Promise<boolean>;
-  onReview: () => Promise<boolean>;
   onPublish: () => Promise<boolean>;
   onArchive: () => Promise<boolean>;
 }) {
   const [exhibition, setExhibition] = useState(snapshot.exhibition);
-  const labels = {
-    draft: "Rascunho",
-    in_review: "Em revisão",
-    published: "Publicada",
-    archived: "Arquivada",
-  };
   const unsaved =
     JSON.stringify(exhibition) !== JSON.stringify(snapshot.exhibition);
   return (
     <section className="room-admin">
-      <h2>Exposição e salas</h2>
+      <h2>Dados da exposição</h2>
       <p>
-        Estado: {labels[snapshot.exhibition.status]}. Revisão e publicação são
-        simuladas neste navegador.
+        {live
+          ? "A exposição está no ar: o site mostra as obras publicadas."
+          : "A exposição está fora do ar: o site não mostra nenhuma obra."}
       </p>
       <fieldset disabled={busy}>
         <label>
@@ -65,37 +60,36 @@ export default function ExhibitionEditor({
           </label>
         </div>
         <div className="editor-actions">
-          <button onClick={() => void onSave(exhibition)}>
-            Salvar rascunho
-          </button>
           <button
-            disabled={unsaved || snapshot.exhibition.status === "in_review"}
-            onClick={() => void onReview()}
+            className="primary"
+            disabled={!unsaved}
+            onClick={() => void onSave(exhibition)}
           >
-            Enviar para revisão
+            Salvar dados da exposição
           </button>
-          <button
-            disabled={unsaved || snapshot.exhibition.status !== "in_review"}
-            onClick={() => void onPublish()}
-          >
-            Publicar localmente
-          </button>
-          <button onClick={() => void onArchive()}>Arquivar localmente</button>
+          {!live && (
+            <button className="outline" onClick={() => void onPublish()}>
+              Colocar exposição no ar
+            </button>
+          )}
+          {live && (
+            <button
+              className="danger"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Tirar a exposição do ar? Visitantes deixam de ver as obras até você publicar de novo.",
+                  )
+                )
+                  void onArchive();
+              }}
+            >
+              Tirar exposição do ar
+            </button>
+          )}
         </div>
-        {unsaved && <p>Salve as alterações antes de revisar ou publicar.</p>}
+        {unsaved && <p className="editor-hint">Há alterações não salvas.</p>}
       </fieldset>
-      {snapshot.rooms.map((r) => (
-        <article key={r.id}>
-          <b>
-            Sala {r.order + 1} · {r.name}
-          </b>
-          <span>{r.subtitle}</span>
-          <small>
-            {snapshot.placements.filter((p) => p.roomId === r.id).length}{" "}
-            registros
-          </small>
-        </article>
-      ))}
     </section>
   );
 }
