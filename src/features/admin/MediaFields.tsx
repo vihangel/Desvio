@@ -77,11 +77,13 @@ export default function MediaFields({
                   ? "✓ Imagem local selecionada."
                   : media.src?.startsWith("/")
                     ? "✓ Imagem do acervo do site."
-                    : media.src
-                      ? "✓ Usando endereço externo."
-                      : media.type === "model"
-                        ? "Nenhum arquivo 3D anexado."
-                        : "Nenhuma imagem anexada."}
+                    : media.src?.startsWith("blob:")
+                      ? "✓ Arquivo carregado nesta sessão."
+                      : media.src
+                        ? "✓ Usando endereço externo."
+                        : media.type === "model"
+                          ? "Nenhum arquivo 3D anexado."
+                          : "Nenhuma imagem anexada."}
             </p>
             {media.type === "image" && media.src && (
               <img className="upload-preview" src={media.src} alt="" />

@@ -781,3 +781,45 @@
   padding: 2px 8px;
   border-radius: 4px;
 }
+.number-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.number-input span {
+  color: var(--color-muted);
+  min-width: 14px;
+}
+.field input[aria-invalid="true"] {
+  border-color: var(--color-accent-text);
+}
+.field-error {
+  color: var(--color-accent-text);
+}
+.field-row-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.orientation {
+  display: grid;
+  gap: 8px;
+}
+.orientation-row {
+  display: grid;
+  grid-template-columns: 1fr auto 52px auto;
+  align-items: center;
+  gap: 8px;
+}
+.orientation-row output {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.orientation-row .outline {
+  min-width: 72px;
+  padding: 8px 10px;
+}
+@media (max-width: 700px) {
+  .field-row-3 {
+    grid-template-columns: 1fr;
+  }
+}

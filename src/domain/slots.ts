@@ -55,3 +55,6 @@ export function presentationFor(
 ) {
   return placement.presentation ?? (type !== "model" ? "frame" : "pedestal");
 }
+// Placements store world coordinates; people edit depth relative to the room.
+export const roomDepthOffset = (room: ExhibitionRoom) =>
+  -room.order * ROOM_DEPTH;

@@ -1,6 +1,12 @@
 import { youtubeId } from "./youtube";
 import type { Artist, CollectionSnapshot, RecordDraft } from "./entities";
-import { roomSlots, presentationFor, slotSupports } from "./slots";
+import {
+  roomDepthOffset,
+  roomSlots,
+  presentationFor,
+  slotSupports,
+} from "./slots";
+import { ROOM_BOUNDS, SCALE_LIMITS } from "./constants";
 export function safeSource(value: string, allowLocal = false): boolean {
   if (
     allowLocal &&
@@ -84,22 +90,33 @@ export function validateRecord(
     )
   )
     throw new Error("Este slot já está ocupado.");
-  const [x, y, z] = placement.position;
-  if (
-    Math.abs(x) > 4.8 ||
-    y < 0 ||
-    y > 3.8 ||
-    Math.abs(z + room!.order * 12) > 5.7 ||
-    placement.scale.some((n) => n > 4)
-  )
-    throw new Error("Mantenha a obra dentro da sala e a escala entre 0 e 4.");
   if (
     [...placement.position, ...placement.rotation, ...placement.scale].some(
       (n) => !Number.isFinite(n),
-    ) ||
-    placement.scale.some((n) => n <= 0)
+    )
   )
     throw new Error("Posicionamento inválido.");
+  // One message per field, with the allowed range and the current value.
+  const [x, y, z] = placement.position;
+  const depth = z - roomDepthOffset(room!);
+  const fmt = (n: number) =>
+    n.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+  if (Math.abs(x) > ROOM_BOUNDS.side)
+    throw new Error(
+      `Lateral fora da sala: use de −${fmt(ROOM_BOUNDS.side)} a ${fmt(ROOM_BOUNDS.side)} m (está ${fmt(x)}).`,
+    );
+  if (y < ROOM_BOUNDS.minHeight || y > ROOM_BOUNDS.maxHeight)
+    throw new Error(
+      `Altura fora da sala: use de 0 a ${fmt(ROOM_BOUNDS.maxHeight)} m (está ${fmt(y)}).`,
+    );
+  if (Math.abs(depth) > ROOM_BOUNDS.depth)
+    throw new Error(
+      `Profundidade fora da sala: use de −${fmt(ROOM_BOUNDS.depth)} a ${fmt(ROOM_BOUNDS.depth)} m (está ${fmt(depth)}).`,
+    );
+  if (placement.scale.some((n) => n < SCALE_LIMITS.min || n > SCALE_LIMITS.max))
+    throw new Error(
+      `Tamanho deve ficar entre ${fmt(SCALE_LIMITS.min)} e ${fmt(SCALE_LIMITS.max)} (está ${fmt(placement.scale[0])}).`,
+    );
 }
 export function validateExhibition(snapshot: CollectionSnapshot): void {
   const { exhibition } = snapshot;

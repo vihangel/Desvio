@@ -244,3 +244,65 @@ export function StatusPill({
 }) {
   return <span className={`status-pill status-${tone}`}>{children}</span>;
 }
+
+const formatNumber = (n: number) =>
+  n.toLocaleString("pt-BR", { maximumFractionDigits: 2, useGrouping: false });
+const parseNumber = (text: string) => {
+  const n = Number(text.trim().replace(",", "."));
+  return text.trim() !== "" && Number.isFinite(n) ? n : undefined;
+};
+// Decimal input that accepts "1,5", "-" and an empty field while typing; only
+// valid values inside the range reach the form, and the range is explained.
+export function NumberField({
+  label,
+  hint,
+  value,
+  min,
+  max,
+  unit,
+  onChange,
+}: {
+  label: string;
+  hint?: ReactNode;
+  value: number;
+  min: number;
+  max: number;
+  unit?: string;
+  onChange: (value: number) => void;
+}) {
+  const [text, setText] = useState(formatNumber(value));
+  useEffect(() => {
+    if (parseNumber(text) !== value) setText(formatNumber(value));
+    // Only external changes (e.g. "Voltar à posição sugerida") rewrite the text.
+  }, [value]);
+  const parsed = parseNumber(text);
+  const invalid = parsed === undefined || parsed < min || parsed > max;
+  return (
+    <label className="field">
+      <span className="field-label">{label}</span>
+      <span className="number-input">
+        <input
+          type="text"
+          inputMode="decimal"
+          value={text}
+          aria-invalid={invalid}
+          onChange={(e) => {
+            setText(e.target.value);
+            const next = parseNumber(e.target.value);
+            if (next !== undefined && next >= min && next <= max)
+              onChange(next);
+          }}
+          onBlur={() => {
+            if (invalid) setText(formatNumber(value));
+          }}
+        />
+        {unit && <span>{unit}</span>}
+      </span>
+      <small className={invalid ? "field-hint field-error" : "field-hint"}>
+        {invalid
+          ? `Use um valor de ${formatNumber(min)} a ${formatNumber(max)}.`
+          : hint}
+      </small>
+    </label>
+  );
+}

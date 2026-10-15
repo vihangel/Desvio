@@ -6,7 +6,9 @@ import type {
 // Above this, a scene stays heavy on phones even when the file is small.
 export const HEAVY_TRIANGLES = 1_500_000;
 export const megabytes = (bytes: number) =>
-  `${(bytes / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;
+  bytes < 1_000_000
+    ? `${Math.max(1, Math.round(bytes / 1000))} KB`
+    : `${(bytes / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;
 // Escalates only as far as needed: smaller textures happen silently; reducing
 // the geometry changes the work's shape, so it is asked first.
 export async function optimizeForUpload(

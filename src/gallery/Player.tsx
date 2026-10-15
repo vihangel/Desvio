@@ -108,12 +108,24 @@ export default function Player({
   useEffect(() => {
     if (jumpTo.focus) {
       const placement = jumpTo.focus;
+      // A 3D object's rotation is its own orientation, not a viewing
+      // direction: look at it from the room entrance side. Wall works face
+      // the direction of their wall (yaw only).
+      const object = placement.slotId.startsWith("pedestal");
       const normal = new THREE.Vector3(0, 0, 1).applyEuler(
-        new THREE.Euler(...placement.rotation),
+        new THREE.Euler(0, object ? 0 : placement.rotation[1], 0),
       );
-      camera.position.fromArray(placement.position).addScaledVector(normal, 3);
+      camera.position
+        .fromArray(placement.position)
+        .addScaledVector(normal, object ? 3.6 : 3);
       camera.position.y = 1.7;
-      camera.lookAt(new THREE.Vector3(...placement.position));
+      camera.lookAt(
+        new THREE.Vector3(
+          placement.position[0],
+          object ? 1.4 : placement.position[1],
+          placement.position[2],
+        ),
+      );
       yaw.current = camera.rotation.y;
       pitch.current = camera.rotation.x;
     } else camera.position.set(0, 1.7, 3.3 - 12 * jumpTo.room);
