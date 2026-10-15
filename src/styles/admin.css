@@ -745,3 +745,39 @@
     min-width: 0;
   }
 }
+.credentials-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px solid var(--ok-text);
+  background: var(--ok-bg);
+}
+.credentials-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+.credentials-card dl {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.credentials-card dl div {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px;
+}
+.credentials-card dt {
+  color: var(--color-muted);
+}
+.credentials-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.credentials-card code {
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+}

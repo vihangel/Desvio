@@ -104,6 +104,11 @@ export default function ResetPassword({
                 : "Salvar nova senha e entrar"}
           </button>
           {error && <p role="alert">{error}</p>}
+          {!invited && (
+            <button className="link-button" type="button" onClick={onDone}>
+              Voltar ao admin
+            </button>
+          )}
         </form>
       )}
     </main>

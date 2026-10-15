@@ -69,14 +69,15 @@ Para trazer um acervo salvo no modo demonstrativo, aplicar `20261014200000_desvi
 
 ## Contas de artista
 
-A curadoria convida uma pessoa artista na tela dela no admin (`/admin/artistas/<id>` → “Acesso da pessoa artista”). O convite chama a Edge Function `desvio-invite-artist`, que confere se quem chama é da curadoria, envia o e-mail de convite do Supabase e vincula a conta à artista em `desvio_artist_accounts`. O link do e-mail abre `/admin/redefinir-senha`, onde a pessoa cria a senha.
+A curadoria dá acesso a uma pessoa artista na tela dela no admin (`/admin/artistas/<id>` → “Acesso da pessoa artista”). Não há e-mail: a Edge Function `desvio-invite-artist` confere se quem chama é da curadoria, cria a conta já confirmada com uma senha aleatória, vincula a conta à artista em `desvio_artist_accounts` e devolve a senha uma única vez. A curadoria copia endereço, e-mail e senha e envia à pessoa. Depois de entrar, a pessoa pode usar “Trocar senha”.
+
+A mesma função gera uma nova senha (“Gerar nova senha”) e remove o acesso, apagando o login. As duas ações só valem para contas de artista; contas da curadoria ou de admin são recusadas. Criar acesso para um e-mail que já tem conta é recusado, para não trocar a senha de uma conta existente.
 
 A conta de artista vê e edita só as salas que listam aquela artista (`artistIds`) e as obras dessas salas (`desvio_artist_edit`). Nas salas, pode mudar nome, texto e capacidade; quem participa da sala e a ordem ficam com a curadoria. Obras salvas pela artista voltam para Rascunho com `reviewRequested`, e a curadoria as publica (o que limpa a marca). A artista só exclui obras em rascunho.
 
 Para ativar:
 
 1. Aplicar `20261015090000_desvio_artist_accounts.sql`.
-2. Publicar a função: `supabase functions deploy desvio-invite-artist`. Ela usa as variáveis padrão do projeto (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`); a chave de serviço nunca vai para o navegador.
-3. Manter `/admin/redefinir-senha` em Redirect URLs (já necessário para a redefinição de senha).
+2. Publicar a função: `supabase functions deploy desvio-invite-artist --project-ref <ref>`, ou pelo Dashboard (Edge Functions → Deploy a new function → Via Editor, colando `supabase/functions/desvio-invite-artist/index.ts`). Ela usa as variáveis padrão do projeto (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`); a chave de serviço nunca vai para o navegador.
 
 Fotos de perfil ficam em `photo` (bucket/path) no conteúdo da artista e são legíveis pelo público quando a artista está na edição publicada.

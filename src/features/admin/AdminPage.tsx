@@ -36,7 +36,6 @@ import {
   type AdminSection,
 } from "./useAdminRoute";
 import { ConfirmProvider, Toast, useConfirm } from "./ui";
-import { routes } from "../../app/routes";
 type Props = {
   loadLocalDraft?: () => Promise<CollectionSnapshot>;
   mediaService: MediaService;
@@ -48,6 +47,7 @@ type Props = {
   onChange: (state: CollectionState) => void;
   onExit: () => void;
   onSignOut?: () => void;
+  onChangePassword?: () => void;
 };
 export default function AdminPage(props: Props) {
   return (
@@ -73,6 +73,7 @@ function AdminShell({
   onChange,
   onExit,
   onSignOut,
+  onChangePassword,
   loadLocalDraft,
 }: Props) {
   const remote = repository.mode === "supabase";
@@ -305,42 +306,50 @@ function AdminShell({
             void reloadAccounts();
           }
         }}
-        onInvite={
+        onCreateAccess={
           accountService
             ? async (email) => {
                 try {
-                  editor.notify(`Enviando convite para ${email}…`);
-                  const invited = await accountService.invite(
+                  editor.notify(`Criando o acesso de ${email}…`);
+                  const created = await accountService.create(
                     email,
                     initial.id,
-                    window.location.origin + routes.reset_password,
                   );
-                  editor.notify(
-                    invited
-                      ? `Convite enviado para ${email}.`
-                      : `${email} já tinha conta e agora tem acesso. Se não souber a senha, a pessoa pode usar “Esqueci minha senha”.`,
-                    "success",
-                  );
+                  editor.notify("Acesso criado. Copie a senha.", "success");
                   await reloadAccounts();
-                  return true;
+                  return created;
                 } catch (error) {
                   editor.notify(
                     error instanceof Error
                       ? error.message
-                      : "Falha no convite.",
+                      : "Falha ao criar acesso.",
                     "error",
                   );
-                  return false;
+                  return undefined;
                 }
               }
             : undefined
         }
+        onResetPassword={async (account) => {
+          if (!accountService) return undefined;
+          try {
+            const next = await accountService.resetPassword(account.userId);
+            editor.notify("Nova senha gerada. Copie e envie.", "success");
+            return next;
+          } catch (error) {
+            editor.notify(
+              error instanceof Error ? error.message : "Falha ao gerar senha.",
+              "error",
+            );
+            return undefined;
+          }
+        }}
         onRemoveAccount={async (account) => {
           if (
             !accountService ||
             !(await confirm({
               title: `Remover o acesso de ${account.email}?`,
-              body: "A pessoa deixa de editar as salas. A conta de login continua existindo e pode ser convidada de novo.",
+              body: "O login da pessoa é apagado e ela deixa de editar as salas. Você pode criar um acesso novo depois.",
               confirmLabel: "Remover acesso",
               tone: "danger",
             }))
@@ -537,6 +546,15 @@ function AdminShell({
           </label>
         )}
         <button onClick={onExit}>Ver o site</button>
+        {onChangePassword && (
+          <button
+            onClick={async () => {
+              if (await canLeave()) onChangePassword();
+            }}
+          >
+            Trocar senha
+          </button>
+        )}
         {onSignOut && <button onClick={onSignOut}>Sair</button>}
       </div>
       {!inForm && route.section !== "preview" && (

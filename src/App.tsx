@@ -181,6 +181,9 @@ export default function App() {
                   onChange={setState}
                   onExit={() => navigate("home")}
                   accountEmail={auth.email}
+                  onChangePassword={
+                    authService ? () => navigate("reset_password") : undefined
+                  }
                   onSignOut={
                     authService
                       ? () => {

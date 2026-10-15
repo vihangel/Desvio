@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Artist, CollectionSnapshot } from "../../domain/entities";
-import type { ArtistAccount } from "../../domain/accounts";
+import type { AccessCredentials, ArtistAccount } from "../../domain/accounts";
 import { Field, FormPage, Section, StatusPill, useConfirm } from "./ui";
 export const initials = (name: string) =>
   name
@@ -79,9 +79,11 @@ export function ArtistsList({
                   {account && (
                     <span className="item-pills">
                       <StatusPill
-                        tone={account.confirmed ? "published" : "draft"}
+                        tone={account.lastSignInAt ? "published" : "draft"}
                       >
-                        {account.confirmed ? "Tem acesso" : "Convite pendente"}
+                        {account.lastSignInAt
+                          ? "Tem acesso"
+                          : "Ainda não entrou"}
                       </StatusPill>
                     </span>
                   )}
@@ -112,7 +114,8 @@ export default function ArtistEditor({
   onBack,
   onUploadPhoto,
   onDirty,
-  onInvite,
+  onCreateAccess,
+  onResetPassword,
   onRemoveAccount,
   onOpenRooms,
 }: {
@@ -127,12 +130,16 @@ export default function ArtistEditor({
   onBack: () => void;
   onUploadPhoto: (file: File) => Promise<Artist["photo"]>;
   onDirty: (dirty: boolean) => void;
-  onInvite?: (email: string) => Promise<boolean>;
+  onCreateAccess?: (email: string) => Promise<AccessCredentials | undefined>;
+  onResetPassword?: (
+    account: ArtistAccount,
+  ) => Promise<AccessCredentials | undefined>;
   onRemoveAccount?: (account: ArtistAccount) => Promise<void>;
   onOpenRooms: () => void;
 }) {
   const [artist, setArtist] = useState(initial);
   const [email, setEmail] = useState("");
+  const [credentials, setCredentials] = useState<AccessCredentials>();
   const confirm = useConfirm();
   const dirty = isNew || JSON.stringify(artist) !== JSON.stringify(initial);
   useEffect(() => {
@@ -250,7 +257,7 @@ export default function ArtistEditor({
             />
           </Field>
         </Section>
-        {!isNew && onInvite && (
+        {!isNew && onCreateAccess && (
           <Section
             title="Acesso da pessoa artista"
             description="Com acesso, a pessoa entra em /admin e edita as salas vinculadas a ela e as obras dessas salas. As obras que ela salvar voltam para a curadoria antes de aparecer no site."
@@ -263,50 +270,80 @@ export default function ArtistEditor({
                 Gerenciar salas
               </button>
             </p>
+            {credentials && (
+              <CredentialsCard
+                artistName={initial.name}
+                credentials={credentials}
+                onClose={() => setCredentials(undefined)}
+              />
+            )}
             {linked.map((account) => (
               <div key={account.userId} className="account-row">
                 <span>
                   <b>{account.email}</b>
                   <small>
-                    {account.confirmed
-                      ? "Tem acesso"
-                      : "Convite enviado; aguardando a pessoa criar a senha"}
+                    {account.lastSignInAt
+                      ? `Último acesso em ${new Date(account.lastSignInAt).toLocaleDateString("pt-BR")}`
+                      : "Ainda não entrou"}
                   </small>
                 </span>
-                <button
-                  className="danger-outline"
-                  onClick={() => void onRemoveAccount?.(account)}
-                >
-                  Remover acesso
-                </button>
+                <span className="inline-actions">
+                  <button
+                    className="outline"
+                    onClick={async () => {
+                      if (
+                        await confirm({
+                          title: "Gerar uma nova senha?",
+                          body: "A senha atual deixa de funcionar. Você vai copiar a nova e enviar para a pessoa.",
+                          confirmLabel: "Gerar nova senha",
+                        })
+                      ) {
+                        const next = await onResetPassword?.(account);
+                        if (next) setCredentials(next);
+                      }
+                    }}
+                  >
+                    Gerar nova senha
+                  </button>
+                  <button
+                    className="danger-outline"
+                    onClick={() => void onRemoveAccount?.(account)}
+                  >
+                    Remover acesso
+                  </button>
+                </span>
               </div>
             ))}
-            <form
-              className="invite-form"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (await onInvite(email)) setEmail("");
-              }}
-            >
-              <Field
-                label={
-                  linked.length ? "Convidar outro e-mail" : "E-mail da pessoa"
-                }
-                hint="Ela recebe um e-mail com link para criar a senha."
+            {!linked.length && (
+              <form
+                className="invite-form"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const created = await onCreateAccess(email);
+                  if (created) {
+                    setCredentials(created);
+                    setEmail("");
+                  }
+                }}
               >
-                <input
-                  type="email"
-                  inputMode="email"
-                  autoComplete="off"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </Field>
-              <button className="outline" disabled={busy}>
-                Enviar convite
-              </button>
-            </form>
+                <Field
+                  label="E-mail da pessoa"
+                  hint="Cria o acesso na hora, com uma senha gerada. Nenhum e-mail é enviado: você copia os dados e manda para a pessoa."
+                >
+                  <input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="off"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Field>
+                <button className="outline" disabled={busy}>
+                  Criar acesso
+                </button>
+              </form>
+            )}
           </Section>
         )}
         {!isNew && (
@@ -340,5 +377,69 @@ export default function ArtistEditor({
         )}
       </fieldset>
     </FormPage>
+  );
+}
+// Shown once after creating access or a new password; the app keeps no copy.
+function CredentialsCard({
+  artistName,
+  credentials,
+  onClose,
+}: {
+  artistName: string;
+  credentials: AccessCredentials;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState("");
+  const login = `${window.location.origin}/admin`;
+  const message = `Olá! Seu acesso ao Desvio está pronto.\n\nEndereço: ${login}\nE-mail: ${credentials.email}\nSenha: ${credentials.password}\n\nDepois de entrar, você pode trocar a senha em “Trocar senha”.`;
+  const copy = async (label: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(label);
+    } catch {
+      setCopied("");
+    }
+  };
+  return (
+    <div className="credentials-card" role="status">
+      <b>Acesso de {artistName} pronto</b>
+      <p>
+        Copie e envie para a pessoa por um canal seguro (WhatsApp, Signal,
+        e-mail). Esta senha não aparece de novo.
+      </p>
+      <dl>
+        <div>
+          <dt>Endereço</dt>
+          <dd>{login}</dd>
+        </div>
+        <div>
+          <dt>E-mail</dt>
+          <dd>{credentials.email}</dd>
+        </div>
+        <div>
+          <dt>Senha</dt>
+          <dd>
+            <code>{credentials.password}</code>
+          </dd>
+        </div>
+      </dl>
+      <div className="inline-actions">
+        <button
+          className="primary"
+          onClick={() => void copy("message", message)}
+        >
+          {copied === "message" ? "Mensagem copiada ✓" : "Copiar mensagem"}
+        </button>
+        <button
+          className="outline"
+          onClick={() => void copy("password", credentials.password)}
+        >
+          {copied === "password" ? "Senha copiada ✓" : "Copiar só a senha"}
+        </button>
+        <button className="link-button" onClick={onClose}>
+          Já enviei, fechar
+        </button>
+      </div>
+    </div>
   );
 }
