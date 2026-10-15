@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import type { AuthService } from "../../domain/auth";
+import type { AuthIdentity, AuthService } from "../../domain/auth";
 export function useAuth(service: AuthService | undefined) {
   const [state, setState] = useState({
     userId: "",
     email: "",
     editor: false,
+    role: null as AuthIdentity["role"],
+    artistId: null as string | null,
     loading: !!service,
     error: "",
   });
@@ -22,6 +24,8 @@ export function useAuth(service: AuthService | undefined) {
           setState((s) =>
             s.userId === next.userId &&
             s.editor === next.editor &&
+            s.role === next.role &&
+            s.artistId === next.artistId &&
             s.email === next.email &&
             !s.loading &&
             !s.error
@@ -35,6 +39,8 @@ export function useAuth(service: AuthService | undefined) {
             userId: "",
             email: "",
             editor: false,
+            role: null,
+            artistId: null,
             loading: false,
             error:
               error instanceof Error

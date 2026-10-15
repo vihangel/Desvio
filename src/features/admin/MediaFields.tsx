@@ -1,4 +1,10 @@
 import type { RecordDraft } from "../../domain/entities";
+import { Field } from "./ui";
+const typeLabels = {
+  image: "Imagem",
+  model: "Objeto 3D",
+  video: "Vídeo do YouTube",
+} as const;
 export default function MediaFields({
   draft,
   onChange,
@@ -17,130 +23,155 @@ export default function MediaFields({
   remote: boolean;
 }) {
   const { media, placement } = draft;
-  const room = { id: placement.roomId };
   const changeMedia = (patch: Partial<typeof media>) =>
     onChange({ ...draft, media: { ...media, ...patch } });
+  const attached = !!(media.path || media.src);
   return (
     <>
-      <label>
-        Tipo de mídia
-        <select
-          value={media.type}
-          onChange={(e) =>
-            onPlace(
-              room.id,
-              undefined,
-              e.target.value as "image" | "model" | "video",
-            )
-          }
+      <div className="segmented" role="radiogroup" aria-label="Tipo de mídia">
+        {(["image", "model", "video"] as const).map((type) => (
+          <label key={type} className={media.type === type ? "selected" : ""}>
+            <input
+              type="radio"
+              name="media-type"
+              checked={media.type === type}
+              onChange={() => onPlace(placement.roomId, undefined, type)}
+            />
+            {typeLabels[type]}
+          </label>
+        ))}
+      </div>
+      <small className="field-hint">
+        Trocar o tipo apaga o arquivo atual e escolhe uma posição compatível na
+        sala.
+      </small>
+      {media.type === "video" ? (
+        <Field
+          label="Link do YouTube"
+          hint="Vídeo público ou não listado, com incorporação permitida."
         >
-          <option value="image">Imagem</option>
-          <option value="model">Objeto 3D (GLB, STL ou OBJ)</option>
-          <option value="video">Vídeo do YouTube</option>
-        </select>
-      </label>
-      <label>
-        {media.type === "image"
-          ? "Imagem"
-          : media.type === "video"
-            ? "Link do YouTube"
-            : "Objeto 3D"}{" "}
-        — endereço
-        <input
-          value={
-            media.path
-              ? "Arquivo enviado"
-              : media.src?.startsWith("data:")
-                ? ""
-                : (media.src ?? "")
-          }
-          disabled={!!media.path}
-          placeholder={
-            media.src?.startsWith("data:")
-              ? "Imagem local selecionada"
-              : "https://…"
-          }
-          onChange={(e) =>
-            changeMedia({
-              src: e.target.value,
-              bucket: undefined,
-              path: undefined,
-            })
-          }
-        />
-      </label>
-      {media.path && (
-        <button
-          onClick={() =>
-            changeMedia({ src: undefined, bucket: undefined, path: undefined })
-          }
-        >
-          Usar endereço externo
-        </button>
-      )}
-      {media.type !== "video" && (
-        <label className="upload-label">
-          Enviar arquivo
           <input
-            type="file"
-            accept={
-              media.type === "image"
-                ? "image/png,image/jpeg,image/webp"
-                : ".glb,.stl,.obj"
-            }
-            onChange={(e) => {
-              void onUpload(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-        </label>
-      )}
-      {media.type === "model" && (
-        <p
-          className={
-            media.src || media.path ? "file-status ok" : "file-status missing"
-          }
-          role="status"
-        >
-          {media.path
-            ? `✓ Arquivo 3D anexado (${(media.modelFormat ?? "glb").toUpperCase()}).`
-            : media.src
-              ? "✓ Arquivo 3D anexado por endereço."
-              : "Nenhum arquivo 3D anexado. Envie um GLB, STL ou OBJ."}
-        </p>
-      )}
-      {media.type === "model" && (
-        <label>
-          Formato do modelo
-          <select
-            value={media.modelFormat ?? "glb"}
+            type="url"
+            inputMode="url"
+            placeholder="https://www.youtube.com/watch?v=…"
+            value={media.src ?? ""}
             onChange={(e) =>
               changeMedia({
-                modelFormat: e.target.value as "glb" | "stl" | "obj",
+                src: e.target.value,
+                bucket: undefined,
+                path: undefined,
               })
             }
-          >
-            <option value="glb">GLB com materiais</option>
-            <option value="stl">STL sem texturas</option>
-            <option value="obj">OBJ sem materiais externos</option>
-          </select>
-        </label>
+          />
+        </Field>
+      ) : (
+        <>
+          <div className="upload-box">
+            <span className="field-label">
+              {media.type === "image" ? "Arquivo da imagem" : "Arquivo 3D"}
+            </span>
+            <p className={attached ? "file-status ok" : "file-status missing"}>
+              {media.path
+                ? `✓ Arquivo enviado${media.type === "model" ? ` (${(media.modelFormat ?? "glb").toUpperCase()})` : ""}.`
+                : media.src?.startsWith("data:")
+                  ? "✓ Imagem local selecionada."
+                  : media.src?.startsWith("/")
+                    ? "✓ Imagem do acervo do site."
+                    : media.src
+                      ? "✓ Usando endereço externo."
+                      : media.type === "model"
+                        ? "Nenhum arquivo 3D anexado."
+                        : "Nenhuma imagem anexada."}
+            </p>
+            {media.type === "image" && media.src && (
+              <img className="upload-preview" src={media.src} alt="" />
+            )}
+            <label className="file-button">
+              {attached ? "Trocar arquivo" : "Escolher arquivo"}
+              <input
+                type="file"
+                accept={
+                  media.type === "image"
+                    ? "image/png,image/jpeg,image/webp"
+                    : ".glb,.stl,.obj"
+                }
+                onChange={(e) => {
+                  void onUpload(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <small className="field-hint">
+              {media.type === "image"
+                ? remote
+                  ? "PNG, JPEG ou WebP de até 5 MB."
+                  : "PNG, JPEG ou WebP de até 1 MB."
+                : remote
+                  ? "GLB, STL ou OBJ de até 150 MB. O Desvio reduz texturas e comprime a malha antes de enviar."
+                  : "GLB, STL ou OBJ. Na demonstração, o arquivo fica só nesta sessão."}
+            </small>
+          </div>
+          <details className="advanced">
+            <summary>
+              Usar um endereço na internet em vez de enviar arquivo
+            </summary>
+            <Field label="Endereço do arquivo">
+              <input
+                type="url"
+                inputMode="url"
+                placeholder="https://"
+                value={
+                  media.path || media.src?.startsWith("data:")
+                    ? ""
+                    : (media.src ?? "")
+                }
+                onChange={(e) =>
+                  changeMedia({
+                    src: e.target.value,
+                    bucket: undefined,
+                    path: undefined,
+                  })
+                }
+              />
+            </Field>
+            {media.type === "model" && (
+              <Field label="Formato do modelo">
+                <select
+                  value={media.modelFormat ?? "glb"}
+                  onChange={(e) =>
+                    changeMedia({
+                      modelFormat: e.target.value as "glb" | "stl" | "obj",
+                    })
+                  }
+                >
+                  <option value="glb">GLB com materiais</option>
+                  <option value="stl">STL sem texturas</option>
+                  <option value="obj">OBJ sem materiais externos</option>
+                </select>
+              </Field>
+            )}
+          </details>
+        </>
       )}
-      {media.type === "video" && (
-        <small>
-          Use vídeo público ou não listado com incorporação habilitada. A prévia
-          ao olhar é silenciosa; o som exige ação do visitante.
-        </small>
-      )}
-      <label>
-        Descrição acessível da mídia
+      <Field
+        label="Descrição acessível"
+        hint="Descreva o que se vê, para quem usa leitor de tela."
+      >
         <input
           value={media.alt}
           onChange={(e) => changeMedia({ alt: e.target.value })}
         />
-      </label>
-      <label>
-        Direitos
+      </Field>
+      <Field
+        label="Créditos da mídia"
+        hint="Quem fotografou, filmou ou modelou."
+      >
+        <input
+          value={media.attribution}
+          onChange={(e) => changeMedia({ attribution: e.target.value })}
+        />
+      </Field>
+      <Field label="Direitos de uso">
         <select
           value={media.rights}
           onChange={(e) =>
@@ -152,28 +183,18 @@ export default function MediaFields({
           <option value="reference">Painel editorial de pesquisa</option>
           <option value="licensed">Reprodução autorizada</option>
         </select>
-      </label>
-      <label>
-        Créditos da mídia
-        <input
-          value={media.attribution}
-          onChange={(e) => changeMedia({ attribution: e.target.value })}
-        />
-      </label>
+      </Field>
       {media.rights === "licensed" && (
-        <label>
-          Referência da autorização
+        <Field
+          label="Referência da autorização"
+          hint="Fica só para a equipe; não aparece no site."
+        >
           <textarea
             value={media.authorization ?? ""}
             onChange={(e) => changeMedia({ authorization: e.target.value })}
           />
-        </label>
+        </Field>
       )}
-      <small className="editor-hint">
-        {remote
-          ? "Imagens de até 5 MB. GLB, STL ou OBJ de até 150 MB: o Desvio reduz as texturas e comprime a malha antes de enviar (até 24 MB depois de otimizado)."
-          : "Imagens de até 1 MB. GLB, STL ou OBJ são otimizados antes do uso (até 12 MB depois); objetos 3D ficam só nesta sessão de demonstração."}
-      </small>
     </>
   );
 }

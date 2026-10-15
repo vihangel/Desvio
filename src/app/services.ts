@@ -6,6 +6,7 @@ import { localMediaService } from "../infrastructure/local/LocalMediaService";
 import { createRemoteClient } from "../infrastructure/supabase/client";
 import { SupabaseCollectionRepository } from "../infrastructure/supabase/SupabaseCollectionRepository";
 import { SupabaseMediaService } from "../infrastructure/supabase/SupabaseMediaService";
+import { SupabaseArtistAccounts } from "../infrastructure/supabase/SupabaseArtistAccounts";
 const configuredMode = import.meta.env.VITE_DATA_MODE ?? "supabase";
 export const dataMode = configuredMode === "demo" ? "demo" : "supabase";
 let remoteError = "";
@@ -37,6 +38,15 @@ export const collectionRepository =
         getItem: (key) => window.localStorage.getItem(key),
         setItem: (key, value) => window.localStorage.setItem(key, value),
       });
+// Same reads as the curator repository; writes go through the artist command.
+export const artistRepository =
+  dataMode === "supabase"
+    ? new SupabaseCollectionRepository(requireClient, "artist")
+    : collectionRepository;
+export const artistAccounts =
+  dataMode === "supabase"
+    ? new SupabaseArtistAccounts(requireClient)
+    : undefined;
 export const mediaService =
   dataMode === "supabase"
     ? new SupabaseMediaService(requireClient)

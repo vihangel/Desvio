@@ -9,6 +9,8 @@ import { useNavigation } from "./app/useNavigation";
 import { useCollection } from "./app/useCollection";
 import {
   collectionRepository,
+  artistRepository,
+  artistAccounts,
   mediaService,
   loadLinsckerPreview,
   loadLocalDraftForMigration,
@@ -29,9 +31,12 @@ const AdminPage = lazy(() => import("./features/admin/AdminPage"));
 export default function App() {
   const { page, go } = useNavigation();
   const auth = useAuth(authService);
+  const artistId =
+    auth.role === "artist" && !auth.editor ? auth.artistId : null;
+  const repository = artistId ? artistRepository : collectionRepository;
   const { state, setState, loading, error, recover, reload } = useCollection(
-    collectionRepository,
-    `${auth.userId}:${auth.editor}`,
+    repository,
+    `${auth.userId}:${auth.role}:${artistId}`,
   );
   const [selected, setSelected] = useState<Artwork | null>(null);
   const [guided, setGuided] = useState(false);
@@ -142,6 +147,7 @@ export default function App() {
           {page === "admin" &&
             dataMode === "supabase" &&
             !auth.editor &&
+            !artistId &&
             authService &&
             (auth.loading ? (
               <p role="status">Conferindo acesso…</p>
@@ -154,7 +160,8 @@ export default function App() {
               />
             ))}
           {page === "admin" &&
-            (dataMode === "demo" || (!auth.loading && auth.editor)) && (
+            (dataMode === "demo" ||
+              (!auth.loading && (auth.editor || !!artistId))) && (
               <Suspense
                 fallback={<main className="admin">Carregando editor…</main>}
               >
@@ -163,7 +170,13 @@ export default function App() {
                     hasLocalDraft() ? loadLocalDraftForMigration : undefined
                   }
                   state={state}
-                  repository={collectionRepository}
+                  repository={repository}
+                  access={
+                    artistId
+                      ? { kind: "artist", artistId }
+                      : { kind: "curator" }
+                  }
+                  accounts={auth.editor ? artistAccounts : undefined}
                   mediaService={mediaService}
                   onChange={setState}
                   onExit={() => navigate("home")}

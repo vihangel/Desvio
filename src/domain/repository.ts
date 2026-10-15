@@ -17,6 +17,7 @@ export interface CollectionRepository {
     revision: number,
   ): Promise<CollectionState>;
   saveArtist(artist: Artist, revision: number): Promise<CollectionState>;
+  deleteArtist(id: string, revision: number): Promise<CollectionState>;
   saveRoom(room: ExhibitionRoom, revision: number): Promise<CollectionState>;
   deleteRoom(id: string, revision: number): Promise<CollectionState>;
   reorderRooms(ids: string[], revision: number): Promise<CollectionState>;

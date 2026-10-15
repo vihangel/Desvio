@@ -22,6 +22,13 @@ export const snapshotSchema = z.object({
       location: z.string(),
       bio: z.string(),
       source: z.string(),
+      photo: z
+        .object({
+          src: z.string().optional(),
+          bucket: z.string().optional(),
+          path: z.string().optional(),
+        })
+        .optional(),
     }),
   ),
   records: z.array(
@@ -42,6 +49,7 @@ export const snapshotSchema = z.object({
         .optional(),
       creditNote: z.string(),
       status,
+      reviewRequested: z.boolean().optional(),
     }),
   ),
   media: z.array(

@@ -11,6 +11,10 @@ import type {
 import type { MediaAsset } from "../../domain/entities";
 export class LocalMediaService implements MediaService {
   readonly modelLimit = 12_000_000;
+  async optimizeImage(file: UploadSource, maxSize: number) {
+    const { optimizeImage } = await import("../media/imageOptimizer");
+    return optimizeImage(file, maxSize);
+  }
   async optimizeModel(file: UploadSource, options?: ModelOptimizationOptions) {
     const { optimizeModel } = await import("../media/modelOptimizer");
     return optimizeModel(file, options);

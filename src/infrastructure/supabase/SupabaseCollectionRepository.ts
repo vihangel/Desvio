@@ -15,27 +15,50 @@ import type { RecordStatus } from "../../domain/publication";
 import type { RemoteClient } from "./client";
 export class SupabaseCollectionRepository implements CollectionRepository {
   readonly mode = "supabase" as const;
-  constructor(private readonly client: () => RemoteClient) {}
+  // Artists use their own command, limited to their rooms and works.
+  constructor(
+    private readonly client: () => RemoteClient,
+    private readonly actor: "curator" | "artist" = "curator",
+  ) {}
   private async hydrate(raw: unknown): Promise<CollectionState> {
     const state = stateSchema.parse(raw);
+    // Draft and published usually share files; each is signed once.
+    const signed = new Map<string, Promise<string>>();
+    const sign = (bucket: string, path: string) => {
+      const key = `${bucket}/${path}`;
+      if (!signed.has(key))
+        signed.set(
+          key,
+          this.client()
+            .storage.from(bucket)
+            .createSignedUrl(path, 3600)
+            .then(({ data, error }) => {
+              if (error)
+                throw new Error(`Falha ao obter mídia: ${error.message}`);
+              return data.signedUrl;
+            }),
+        );
+      return signed.get(key)!;
+    };
     for (const snapshot of [state.draft, state.published]) {
-      await Promise.all(
-        snapshot.media.map(async (media) => {
-          if (media.narration?.path && media.narration.bucket) {
-            const result = await this.client()
-              .storage.from(media.narration.bucket)
-              .createSignedUrl(media.narration.path, 3600);
-            if (result.error) throw new Error(result.error.message);
-            media.narration.src = result.data.signedUrl;
-          }
-          if (!media.path || !media.bucket) return;
-          const { data, error } = await this.client()
-            .storage.from(media.bucket)
-            .createSignedUrl(media.path, 3600);
-          if (error) throw new Error(`Falha ao obter mídia: ${error.message}`);
-          media.src = data.signedUrl;
+      await Promise.all([
+        ...snapshot.media.map(async (media) => {
+          if (media.narration?.path && media.narration.bucket)
+            media.narration.src = await sign(
+              media.narration.bucket,
+              media.narration.path,
+            );
+          if (media.path && media.bucket)
+            media.src = await sign(media.bucket, media.path);
         }),
-      );
+        ...snapshot.artists.map(async (artist) => {
+          if (artist.photo?.path && artist.photo.bucket)
+            artist.photo.src = await sign(
+              artist.photo.bucket,
+              artist.photo.path,
+            );
+        }),
+      ]);
     }
     return state;
   }
@@ -45,7 +68,9 @@ export class SupabaseCollectionRepository implements CollectionRepository {
     return this.hydrate(data);
   }
   private async command(operation: string, payload: unknown, revision: number) {
-    const { data, error } = await this.client().rpc("desvio_edit_collection", {
+    const rpc =
+      this.actor === "artist" ? "desvio_artist_edit" : "desvio_edit_collection";
+    const { data, error } = await this.client().rpc(rpc, {
       operation,
       payload,
       expected_revision: revision,
@@ -87,7 +112,16 @@ export class SupabaseCollectionRepository implements CollectionRepository {
     return this.command("save_exhibition", exhibition, revision);
   }
   saveArtist(artist: Artist, revision: number) {
-    return this.command("save_artist", artist, revision);
+    const durable = structuredClone(artist);
+    if (durable.photo?.path) delete durable.photo.src;
+    if (durable.photo?.src?.startsWith("blob:"))
+      throw new Error("Envie a foto ao Storage antes de salvar.");
+    if (durable.photo && !durable.photo.src && !durable.photo.path)
+      delete durable.photo;
+    return this.command("save_artist", durable, revision);
+  }
+  deleteArtist(id: string, revision: number) {
+    return this.command("delete_artist", { id }, revision);
   }
   saveRoom(room: ExhibitionRoom, revision: number) {
     return this.command("save_room", room, revision);

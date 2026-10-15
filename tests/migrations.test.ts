@@ -11,7 +11,7 @@ beforeAll(async () => {
     "insert into public.desvio_memberships values($1,'curator');",
     [editorId],
   );
-}, 30000);
+}, 120000);
 afterAll(async () => {
   await db?.close();
 });

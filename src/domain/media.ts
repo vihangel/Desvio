@@ -21,6 +21,8 @@ export interface MediaService {
   // Largest stored 3D file, after optimization.
   readonly modelLimit: number;
   // Shrinks textures and compresses geometry before upload; STL/OBJ become GLB.
+  // Downscales a photo before upload (profile pictures, thumbnails).
+  optimizeImage?(file: UploadSource, maxSize: number): Promise<UploadSource>;
   optimizeModel?(
     file: UploadSource,
     options?: ModelOptimizationOptions,

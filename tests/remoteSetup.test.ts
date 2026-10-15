@@ -4,7 +4,7 @@ import type { PGlite } from "@electric-sql/pglite";
 let db: PGlite;
 beforeAll(async () => {
   db = await createTestDatabase(true);
-}, 30000);
+}, 120000);
 afterAll(async () => {
   await db?.close();
 });

@@ -13,6 +13,8 @@ import type {
   RecordDraft,
 } from "../../domain/entities";
 import {
+  assertArtistUnused,
+  validateArtist,
   validateExhibition,
   validateLiveRecord,
   validateRecord,
@@ -192,11 +194,16 @@ export class LocalCollectionRepository implements CollectionRepository {
   }
   saveArtist(artist: Artist, revision: number) {
     return this.mutate(revision, (next) => {
-      if (!artist.name.trim())
-        throw new Error("Informe o nome da pessoa artista.");
+      validateArtist(artist);
       next.draft.artists = next.draft.artists.some((a) => a.id === artist.id)
         ? next.draft.artists.map((a) => (a.id === artist.id ? artist : a))
         : [...next.draft.artists, artist];
+    });
+  }
+  deleteArtist(id: string, revision: number) {
+    return this.mutate(revision, (next) => {
+      assertArtistUnused(next.draft, id);
+      next.draft.artists = next.draft.artists.filter((a) => a.id !== id);
     });
   }
   saveRoom(room: ExhibitionRoom, revision: number) {

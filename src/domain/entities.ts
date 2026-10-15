@@ -10,12 +10,19 @@ export type EditorialStatus = (typeof EDITORIAL_STATUSES)[number];
 export type Rights = (typeof RIGHTS)[number];
 export type MediaType = (typeof MEDIA_TYPES)[number];
 export type Vector3 = [number, number, number];
+// Stored file reference; `src` is resolved at read time like other media.
+export interface StoredImage {
+  src?: string;
+  bucket?: string;
+  path?: string;
+}
 export interface Artist {
   id: Id;
   name: string;
   location: string;
   bio: string;
   source: string;
+  photo?: StoredImage;
 }
 export interface RecordCredit {
   artistId: Id;
@@ -37,6 +44,8 @@ export interface CollectionRecord {
   credits: RecordCredit[];
   creditNote: string;
   status: EditorialStatus;
+  // Set when an artist saved the work; cleared when the curators publish it.
+  reviewRequested?: boolean;
 }
 export interface ArtistAudio {
   src?: string;

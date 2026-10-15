@@ -1,4 +1,5 @@
 import type { RecordDraft } from "../../domain/entities";
+import { Field } from "./ui";
 export default function AudioFields({
   draft,
   onChange,
@@ -26,61 +27,81 @@ export default function AudioFields({
       },
     });
   return (
-    <section>
-      <h3>Narração do artista</h3>
-      <label>
-        Anexar áudio
-        <input
-          type="file"
-          accept=".mp3,.wav,.ogg,.m4a"
-          onChange={(e) => {
-            void onUpload(e.target.files?.[0]);
-            e.target.value = "";
-          }}
-        />
-      </label>
-      <label>
-        Ou endereço do áudio
-        <input
-          type="url"
-          disabled={!!audio?.path}
-          value={audio?.path ? "" : (audio?.src ?? "")}
-          onChange={(e) =>
-            update({ src: e.target.value, bucket: undefined, path: undefined })
-          }
-        />
-      </label>
-      <small>
-        {remote
-          ? "Áudio até 20 MB, persistente no Storage."
-          : "Áudio até 12 MB, disponível somente nesta sessão."}
-      </small>
+    <>
+      <div className="upload-box">
+        <span className="field-label">Áudio</span>
+        <p className={audio ? "file-status ok" : "file-status"}>
+          {audio?.path
+            ? "✓ Áudio enviado."
+            : audio?.src
+              ? "✓ Usando endereço externo."
+              : "Nenhum áudio anexado."}
+        </p>
+        {audio?.src && <audio controls src={audio.src} />}
+        <label className="file-button">
+          {audio ? "Trocar áudio" : "Escolher áudio"}
+          <input
+            type="file"
+            accept=".mp3,.wav,.ogg,.m4a"
+            onChange={(e) => {
+              void onUpload(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <small className="field-hint">
+          MP3, WAV, OGG ou M4A
+          {remote ? " de até 20 MB" : " de até 12 MB, só nesta sessão"}.
+        </small>
+      </div>
+      <details className="advanced">
+        <summary>Usar um endereço na internet</summary>
+        <Field label="Endereço do áudio">
+          <input
+            type="url"
+            inputMode="url"
+            placeholder="https://"
+            disabled={!!audio?.path}
+            value={audio?.path ? "" : (audio?.src ?? "")}
+            onChange={(e) =>
+              update({
+                src: e.target.value,
+                bucket: undefined,
+                path: undefined,
+              })
+            }
+          />
+        </Field>
+      </details>
       {audio && (
         <>
-          <label>
-            Créditos da voz
+          <Field label="Créditos da voz">
             <input
               value={audio.credits}
               onChange={(e) => update({ credits: e.target.value })}
             />
-          </label>
-          <label>
-            Transcrição
+          </Field>
+          <Field
+            label="Transcrição"
+            hint="Texto do áudio, para acessibilidade."
+          >
             <textarea
               value={audio.transcript}
               onChange={(e) => update({ transcript: e.target.value })}
             />
-          </label>
-          <label>
+          </Field>
+          <label className="checkbox-field">
             <input
               type="checkbox"
               checked={audio.authorized}
               onChange={(e) => update({ authorized: e.target.checked })}
-            />{" "}
-            Autorização de reprodução da voz registrada
+            />
+            A pessoa autorizou a reprodução da voz
           </label>
-          <label>
-            Referência da autorização da mídia e da voz
+          <Field
+            label="Referência da autorização"
+            hint="Obrigatória para publicar com áudio. Fica só para a equipe."
+          >
             <textarea
               value={draft.media.authorization ?? ""}
               onChange={(e) =>
@@ -90,8 +111,9 @@ export default function AudioFields({
                 })
               }
             />
-          </label>
+          </Field>
           <button
+            className="link-button danger-link"
             onClick={() =>
               onChange({
                 ...draft,
@@ -103,6 +125,6 @@ export default function AudioFields({
           </button>
         </>
       )}
-    </section>
+    </>
   );
 }

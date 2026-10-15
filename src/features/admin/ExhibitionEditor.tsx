@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CollectionSnapshot, Exhibition } from "../../domain/entities";
+import { Field, Section, StatusPill, useConfirm } from "./ui";
 export default function ExhibitionEditor({
   snapshot,
   live,
@@ -16,29 +17,34 @@ export default function ExhibitionEditor({
   onArchive: () => Promise<boolean>;
 }) {
   const [exhibition, setExhibition] = useState(snapshot.exhibition);
+  const confirm = useConfirm();
   const unsaved =
     JSON.stringify(exhibition) !== JSON.stringify(snapshot.exhibition);
   return (
-    <section className="room-admin">
-      <h2>Dados da exposição</h2>
-      <p>
-        {live
-          ? "A exposição está no ar: o site mostra as obras publicadas."
-          : "A exposição está fora do ar: o site não mostra nenhuma obra."}
-      </p>
-      <fieldset disabled={busy}>
-        <label>
-          Título
+    <Section
+      title="Exposição"
+      description={
+        <>
+          <StatusPill tone={live ? "published" : "archived"}>
+            {live ? "No ar" : "Fora do ar"}
+          </StatusPill>{" "}
+          {live
+            ? "O site mostra as obras publicadas."
+            : "O site não mostra nenhuma obra."}
+        </>
+      }
+    >
+      <fieldset className="form-fields" disabled={busy}>
+        <Field label="Título da exposição">
           <input
             value={exhibition.title}
             onChange={(e) =>
               setExhibition({ ...exhibition, title: e.target.value })
             }
           />
-        </label>
-        <div className="room-admin-grid">
-          <label>
-            Início
+        </Field>
+        <div className="field-row">
+          <Field label="Início">
             <input
               type="date"
               value={exhibition.beginsAt}
@@ -46,9 +52,8 @@ export default function ExhibitionEditor({
                 setExhibition({ ...exhibition, beginsAt: e.target.value })
               }
             />
-          </label>
-          <label>
-            Encerramento
+          </Field>
+          <Field label="Encerramento">
             <input
               type="date"
               min={exhibition.beginsAt}
@@ -57,39 +62,40 @@ export default function ExhibitionEditor({
                 setExhibition({ ...exhibition, endsAt: e.target.value })
               }
             />
-          </label>
+          </Field>
         </div>
-        <div className="editor-actions">
+        <div className="inline-actions">
           <button
             className="primary"
             disabled={!unsaved}
             onClick={() => void onSave(exhibition)}
           >
-            Salvar dados da exposição
+            Salvar exposição
           </button>
-          {!live && (
-            <button className="outline" onClick={() => void onPublish()}>
-              Colocar exposição no ar
-            </button>
-          )}
-          {live && (
+          {live ? (
             <button
-              className="danger"
-              onClick={() => {
+              className="danger-outline"
+              onClick={async () => {
                 if (
-                  window.confirm(
-                    "Tirar a exposição do ar? Visitantes deixam de ver as obras até você publicar de novo.",
-                  )
+                  await confirm({
+                    title: "Tirar a exposição do ar?",
+                    body: "Visitantes deixam de ver todas as obras até você colocá-la no ar de novo. Os status das obras não mudam.",
+                    confirmLabel: "Tirar do ar",
+                    tone: "danger",
+                  })
                 )
                   void onArchive();
               }}
             >
-              Tirar exposição do ar
+              Tirar do ar
+            </button>
+          ) : (
+            <button className="outline" onClick={() => void onPublish()}>
+              Colocar no ar
             </button>
           )}
         </div>
-        {unsaved && <p className="editor-hint">Há alterações não salvas.</p>}
       </fieldset>
-    </section>
+    </Section>
   );
 }

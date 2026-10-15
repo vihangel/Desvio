@@ -1,90 +1,158 @@
 import LocalImport from "./LocalImport";
-import RoomEditor from "./RoomEditor";
-import ArtistEditor from "./ArtistEditor";
-import { useState } from "react";
-import ArtworkDialog from "../../shared/ArtworkDialog";
-import VisitPage from "../visit/VisitPage";
-import type { Artwork, CollectionState } from "../../domain/entities";
-import type { MediaService } from "../../domain/media";
-import type { CollectionRepository } from "../../domain/repository";
-import { selectArtworks } from "../../domain/selectors";
-import {
-  RECORD_STATUSES,
-  asRecordStatus,
-  isOnAir,
-  recordStatusLabels,
-  type RecordStatus,
-} from "../../domain/publication";
-import { useAdminEditor } from "./useAdminEditor";
+import RoomEditor, { RoomsList, newRoom } from "./RoomEditor";
+import ArtistEditor, { ArtistsList } from "./ArtistEditor";
+import WorksList from "./WorksList";
 import RecordEditor from "./RecordEditor";
 import ExhibitionEditor from "./ExhibitionEditor";
-const filterLabels: Record<RecordStatus, string> = {
-  published: "Publicadas",
-  draft: "Rascunhos",
-  archived: "Desativadas",
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ArtworkDialog from "../../shared/ArtworkDialog";
+import VisitPage from "../visit/VisitPage";
+import type {
+  Artist,
+  Artwork,
+  CollectionSnapshot,
+  CollectionState,
+} from "../../domain/entities";
+import type { MediaService } from "../../domain/media";
+import type { CollectionRepository } from "../../domain/repository";
+import type {
+  ArtistAccount,
+  ArtistAccountService,
+} from "../../domain/accounts";
+import { selectArtworks } from "../../domain/selectors";
+import { isOnAir } from "../../domain/publication";
+import {
+  CURATOR,
+  canDeleteRecord,
+  canEditRecord,
+  scopedSnapshot,
+  type Access,
+} from "../../domain/access";
+import { useAdminEditor } from "./useAdminEditor";
+import {
+  adminPath,
+  useAdminRoute,
+  useUnloadWarning,
+  type AdminSection,
+} from "./useAdminRoute";
+import { ConfirmProvider, Toast, useConfirm } from "./ui";
+import { routes } from "../../app/routes";
+type Props = {
+  loadLocalDraft?: () => Promise<CollectionSnapshot>;
+  mediaService: MediaService;
+  state: CollectionState;
+  repository: CollectionRepository;
+  access?: Access;
+  accounts?: ArtistAccountService;
+  accountEmail?: string;
+  onChange: (state: CollectionState) => void;
+  onExit: () => void;
+  onSignOut?: () => void;
 };
-export default function AdminPage({
+export default function AdminPage(props: Props) {
+  return (
+    <ConfirmProvider>
+      <AdminShell {...props} />
+    </ConfirmProvider>
+  );
+}
+const newArtist = (): Artist => ({
+  id: crypto.randomUUID(),
+  name: "",
+  location: "",
+  bio: "",
+  source: "",
+});
+function AdminShell({
   state,
   repository,
   mediaService,
+  access: signedAccess = CURATOR,
+  accounts: accountService,
   accountEmail,
   onChange,
   onExit,
   onSignOut,
   loadLocalDraft,
-}: {
-  loadLocalDraft?: () => Promise<
-    import("../../domain/entities").CollectionSnapshot
-  >;
-  mediaService: MediaService;
-  state: CollectionState;
-  repository: CollectionRepository;
-  accountEmail?: string;
-  onChange: (state: CollectionState) => void;
-  onExit: () => void;
-  onSignOut?: () => void;
-}) {
+}: Props) {
   const remote = repository.mode === "supabase";
-  const [focusWork, setFocusWork] = useState<string>();
+  // The local demo can preview the artist area; remotely the role decides.
+  const [demoAccess, setDemoAccess] = useState<Access>(CURATOR);
+  const access = remote ? signedAccess : demoAccess;
+  const curator = access.kind === "curator";
   const [entered, setEntered] = useState(remote);
-  const [tab, setTab] = useState<
-    "records" | "artists" | "exhibition" | "preview"
-  >("records");
-  const [filter, setFilter] = useState<RecordStatus | "all">("all");
   const [selected, setSelected] = useState<Artwork | null>(null);
-  const editor = useAdminEditor(state, repository, onChange, mediaService);
-  const { draft } = state;
-  const records = draft.records.map((record) => {
-    const media = draft.media.find((m) => m.recordId === record.id);
-    const placement = draft.placements.find((p) => p.recordId === record.id);
-    return {
-      record,
-      status: asRecordStatus(record.status),
-      image: media?.type === "image" ? media.src : undefined,
-      author: [
-        ...record.credits.map(
-          (c) => draft.artists.find((a) => a.id === c.artistId)?.name,
-        ),
-        record.creditNote,
-      ]
-        .filter(Boolean)
-        .join(" e "),
-      room: draft.rooms.find((r) => r.id === placement?.roomId)?.name,
-    };
-  });
-  const counts = Object.fromEntries(
-    RECORD_STATUSES.map((s) => [
-      s,
-      records.filter((r) => r.status === s).length,
-    ]),
-  ) as Record<RecordStatus, number>;
-  const visible = records.filter(
-    (r) => filter === "all" || r.status === filter,
+  const editor = useAdminEditor(
+    state,
+    repository,
+    onChange,
+    mediaService,
+    access,
   );
-  const onAir = isOnAir(draft);
-  const leaveRecord = () =>
-    !editor.dirty ||
-    window.confirm("Esta obra tem alterações não salvas. Descartar?");
+  const confirm = useConfirm();
+  // Forms other than the work editor report unsaved changes here.
+  const formDirty = useRef(false);
+  const [formUnsaved, setFormUnsaved] = useState(false);
+  const setDirty = useCallback((dirty: boolean) => {
+    formDirty.current = dirty;
+    setFormUnsaved(dirty);
+  }, []);
+  const editorDirty = useRef(false);
+  editorDirty.current = editor.dirty;
+  const canLeave = useCallback(
+    async () =>
+      (!editorDirty.current && !formDirty.current) ||
+      confirm({
+        title: "Sair sem salvar?",
+        body: "As alterações desta tela serão perdidas.",
+        confirmLabel: "Sair sem salvar",
+        cancelLabel: "Continuar editando",
+        tone: "danger",
+      }),
+    [confirm],
+  );
+  const { route, go } = useAdminRoute(canLeave);
+  useUnloadWarning(editor.dirty || formUnsaved);
+  const view = scopedSnapshot(access, state.draft);
+  const onAir = isOnAir(state.draft);
+  const editorRef = useRef(editor);
+  editorRef.current = editor;
+  // The URL decides which work is open.
+  useEffect(() => {
+    const current = editorRef.current;
+    if (route.section !== "works" || !route.id) {
+      if (current.draft) current.discard();
+      return;
+    }
+    if (route.id === "nova") {
+      if (!current.create())
+        void go(adminPath("works"), { replace: true, force: true });
+      return;
+    }
+    if (current.draft?.record.id !== route.id) current.edit(route.id);
+  }, [route]);
+  // Artist accounts (curators, Supabase only).
+  const [accounts, setAccounts] = useState<ArtistAccount[]>();
+  const reloadAccounts = useCallback(async () => {
+    if (!accountService || !curator) return;
+    try {
+      setAccounts(await accountService.list());
+    } catch (error) {
+      setAccounts([]);
+      editor.notify(
+        error instanceof Error ? error.message : "Falha ao listar contas.",
+        "error",
+      );
+    }
+  }, [accountService, curator]);
+  useEffect(() => {
+    void reloadAccounts();
+  }, [reloadAccounts]);
+  const newArtistDraft = useMemo(newArtist, [route.section, route.id]);
+  const newRoomDraft = useMemo(
+    () => newRoom(state.draft.rooms.length),
+    [route.section, route.id],
+  );
   if (!entered)
     return (
       <main className="admin admin-gate">
@@ -102,250 +170,416 @@ export default function AdminPage({
         </button>
       </main>
     );
-  const tabs = [
-    ["records", `Obras (${records.length})`],
-    ["artists", `Artistas (${draft.artists.length})`],
-    ["exhibition", "Salas e exposição"],
-  ] as const;
+  const artistName =
+    access.kind === "artist"
+      ? state.draft.artists.find((a) => a.id === access.artistId)?.name
+      : undefined;
+  const tabs: [AdminSection, string][] = [
+    ["works", "Obras"],
+    ...(curator ? ([["artists", "Artistas"]] as [AdminSection, string][]) : []),
+    ["rooms", curator ? "Salas e exposição" : "Suas salas"],
+    ["preview", "Prévia 3D"],
+  ];
+  const open = (section: AdminSection, id?: string) =>
+    void go(adminPath(section, id));
+  const toList = (section: AdminSection) =>
+    void go(adminPath(section), { force: true });
+  let content: React.ReactNode;
+  if (route.section === "works" && route.id) {
+    const draft = editor.draft;
+    const isNew = route.id === "nova";
+    const ready =
+      draft &&
+      (isNew
+        ? !state.draft.records.some((r) => r.id === draft.record.id) ||
+          draft.record.id === route.id
+        : draft.record.id === route.id);
+    if (!isNew && !canEditRecord(access, state.draft, route.id))
+      content = (
+        <NotFound
+          text="Obra não encontrada ou fora das suas salas."
+          onBack={() => toList("works")}
+        />
+      );
+    else if (!draft || !ready) content = <p role="status">Carregando…</p>;
+    else {
+      const saveWork = async () => {
+        const id = draft.record.id;
+        const ok = await editor.save();
+        if (ok && isNew)
+          await go(adminPath("works", id), { replace: true, force: true });
+        return ok;
+      };
+      content = (
+        <RecordEditor
+          key={draft.record.id}
+          draft={draft}
+          snapshot={view}
+          access={access}
+          isNew={isNew}
+          dirty={editor.dirty}
+          busy={editor.busy}
+          remote={remote}
+          canDelete={canDeleteRecord(access, state.draft, draft.record.id)}
+          onChange={editor.setDraft}
+          onPlace={editor.place}
+          onUpload={editor.upload}
+          onUploadAudio={editor.uploadAudio}
+          onSave={saveWork}
+          onSavePreview={async () => {
+            if (editor.dirty && !(await saveWork())) return;
+            await go(`${adminPath("preview")}?obra=${draft.record.id}`, {
+              force: true,
+            });
+          }}
+          onBack={() => open("works")}
+          onDiscard={async () => {
+            if (
+              await confirm({
+                title: "Descartar alterações?",
+                body: "A obra volta a ficar como estava salva.",
+                confirmLabel: "Descartar",
+                tone: "danger",
+              })
+            )
+              editor.edit(draft.record.id);
+          }}
+          onDelete={async () => {
+            if (
+              (await confirm({
+                title: `Excluir “${draft.record.title || "obra sem título"}”?`,
+                body: curator
+                  ? "A obra sai do acervo e do site. Não dá para desfazer. Para só tirar do site, use o status Desativada."
+                  : "A obra é removida. Não dá para desfazer.",
+                confirmLabel: "Excluir obra",
+                tone: "danger",
+              })) &&
+              (await editor.remove())
+            )
+              toList("works");
+          }}
+          onSwap={editor.swap}
+        />
+      );
+    }
+  } else if (route.section === "works")
+    content = (
+      <WorksList
+        snapshot={view}
+        access={access}
+        canCreate={view.rooms.length > 0}
+        onOpen={(id) => open("works", id)}
+        onCreate={() => open("works", "nova")}
+      />
+    );
+  else if (route.section === "artists" && curator && route.id) {
+    const isNew = route.id === "nova";
+    const initial = isNew
+      ? newArtistDraft
+      : state.draft.artists.find((a) => a.id === route.id);
+    content = initial ? (
+      <ArtistEditor
+        key={`${initial.id}:${state.revision}`}
+        initial={initial}
+        isNew={isNew}
+        snapshot={state.draft}
+        busy={editor.busy}
+        remote={remote}
+        accounts={accounts}
+        onDirty={setDirty}
+        onBack={() => open("artists")}
+        onUploadPhoto={editor.uploadPhoto}
+        onOpenRooms={() => open("rooms")}
+        onSave={async (artist) => {
+          const ok = await editor.saveArtist(artist);
+          if (ok && isNew)
+            await go(adminPath("artists", artist.id), {
+              replace: true,
+              force: true,
+            });
+          return ok;
+        }}
+        onDelete={async (artist) => {
+          if (await editor.deleteArtist(artist)) {
+            toList("artists");
+            void reloadAccounts();
+          }
+        }}
+        onInvite={
+          accountService
+            ? async (email) => {
+                try {
+                  editor.notify(`Enviando convite para ${email}…`);
+                  const invited = await accountService.invite(
+                    email,
+                    initial.id,
+                    window.location.origin + routes.reset_password,
+                  );
+                  editor.notify(
+                    invited
+                      ? `Convite enviado para ${email}.`
+                      : `${email} já tinha conta e agora tem acesso. Se não souber a senha, a pessoa pode usar “Esqueci minha senha”.`,
+                    "success",
+                  );
+                  await reloadAccounts();
+                  return true;
+                } catch (error) {
+                  editor.notify(
+                    error instanceof Error
+                      ? error.message
+                      : "Falha no convite.",
+                    "error",
+                  );
+                  return false;
+                }
+              }
+            : undefined
+        }
+        onRemoveAccount={async (account) => {
+          if (
+            !accountService ||
+            !(await confirm({
+              title: `Remover o acesso de ${account.email}?`,
+              body: "A pessoa deixa de editar as salas. A conta de login continua existindo e pode ser convidada de novo.",
+              confirmLabel: "Remover acesso",
+              tone: "danger",
+            }))
+          )
+            return;
+          try {
+            await accountService.remove(account.userId);
+            editor.notify("Acesso removido.", "success");
+            await reloadAccounts();
+          } catch (error) {
+            editor.notify(
+              error instanceof Error ? error.message : "Falha ao remover.",
+              "error",
+            );
+          }
+        }}
+      />
+    ) : (
+      <NotFound
+        text="Pessoa artista não encontrada."
+        onBack={() => toList("artists")}
+      />
+    );
+  } else if (route.section === "artists" && curator)
+    content = (
+      <ArtistsList
+        snapshot={state.draft}
+        accounts={accounts}
+        onOpen={(id) => open("artists", id)}
+        onCreate={() => open("artists", "nova")}
+      />
+    );
+  else if (route.section === "rooms" && route.id) {
+    const isNew = route.id === "nova" && curator;
+    const initial = isNew
+      ? newRoomDraft
+      : view.rooms.find((r) => r.id === route.id);
+    content = initial ? (
+      <RoomEditor
+        key={`${initial.id}:${state.revision}`}
+        initial={initial}
+        isNew={isNew}
+        snapshot={state.draft}
+        access={access}
+        busy={editor.busy}
+        onDirty={setDirty}
+        onBack={() => open("rooms")}
+        onSave={async (room) => {
+          const ok = await editor.saveRoom(room);
+          if (ok && isNew)
+            await go(adminPath("rooms", room.id), {
+              replace: true,
+              force: true,
+            });
+          return ok;
+        }}
+        onDelete={async (room) => {
+          if (await editor.deleteRoom(room)) toList("rooms");
+        }}
+      />
+    ) : (
+      <NotFound
+        text="Sala não encontrada ou não vinculada a você."
+        onBack={() => toList("rooms")}
+      />
+    );
+  } else if (route.section === "rooms")
+    content = (
+      <RoomsList
+        snapshot={state.draft}
+        access={access}
+        busy={editor.busy}
+        onOpen={(id) => open("rooms", id)}
+        onCreate={() => open("rooms", "nova")}
+        onOrder={editor.reorderRooms}
+      >
+        {curator && (
+          <>
+            <ExhibitionEditor
+              key={`exhibition-${state.revision}`}
+              snapshot={state.draft}
+              live={onAir}
+              busy={editor.busy}
+              onSave={editor.saveExhibition}
+              onPublish={editor.publish}
+              onArchive={editor.archive}
+            />
+            {remote && loadLocalDraft && (
+              <LocalImport
+                repository={repository}
+                revision={state.revision}
+                load={loadLocalDraft}
+                onChange={onChange}
+              />
+            )}
+            {!remote && (
+              <button
+                disabled={editor.busy}
+                className="link-button danger-link"
+                onClick={async () => {
+                  if (
+                    await confirm({
+                      title: "Restaurar o acervo de exemplo?",
+                      body: "Apaga as alterações feitas neste navegador.",
+                      confirmLabel: "Restaurar",
+                      tone: "danger",
+                    })
+                  )
+                    void editor.reset();
+                }}
+              >
+                Restaurar acervo de exemplo
+              </button>
+            )}
+          </>
+        )}
+      </RoomsList>
+    );
+  else if (route.section === "preview")
+    content = (
+      <>
+        <div className="admin-preview-toolbar">
+          <button
+            onClick={() =>
+              route.focus ? open("works", route.focus) : open("works")
+            }
+          >
+            ← Voltar
+          </button>
+          <span>
+            Inclui rascunhos. Visitantes só veem as obras publicadas;
+            desativadas não aparecem.
+          </span>
+        </div>
+        <VisitPage
+          key={route.focus ?? "preview"}
+          works={selectArtworks(view)}
+          rooms={view.rooms}
+          onSelect={setSelected}
+          disabled={!!selected}
+          initialWorkId={route.focus}
+          initialGuided={false}
+        />
+      </>
+    );
+  else
+    content = (
+      <NotFound text="Página não encontrada." onBack={() => toList("works")} />
+    );
+  const inForm = !!route.id && route.section !== "preview";
   return (
     <div
       className={
-        tab === "preview" ? "admin-shell admin-shell-preview" : "admin-shell"
+        route.section === "preview"
+          ? "admin-shell admin-shell-preview"
+          : inForm
+            ? "admin-shell admin-shell-form"
+            : "admin-shell"
       }
     >
       <div className="admin-preview-banner">
-        <b>{remote ? "Conectado ao Supabase" : "Modo demonstrativo local"}</b>
+        <b>
+          {access.kind === "artist"
+            ? `Área da artista${artistName ? ` · ${artistName}` : ""}`
+            : remote
+              ? "Curadoria"
+              : "Modo demonstrativo"}
+        </b>
         <span>
-          {remote
-            ? accountEmail
-              ? `Entrou como ${accountEmail}`
-              : "Sessão de curadoria"
-            : "Nada aqui vai para o banco de dados."}
+          {remote ? accountEmail : "Nada aqui vai para o banco de dados."}
         </span>
-        <button disabled={editor.busy} onClick={onExit}>
-          Ver o site
-        </button>
-        {onSignOut && (
-          <button disabled={editor.busy} onClick={onSignOut}>
-            Sair da conta
-          </button>
-        )}
-      </div>
-      {tab !== "preview" && (
-        <main className="admin">
-          <div className="eyebrow">DESVIO · GESTÃO DO ACERVO</div>
-          <h1>Curadoria e organização</h1>
-          <section className={onAir ? "site-status" : "site-status off-air"}>
-            <p>
-              <b>
-                {onAir
-                  ? `${counts.published} obra(s) publicada(s) no site.`
-                  : "A exposição está fora do ar: o site não mostra obras."}
-              </b>{" "}
-              {onAir
-                ? "Obras com status Publicada aparecem no site; ao salvar, as mudanças vão direto para lá."
-                : "Coloque a exposição no ar em “Salas e exposição”."}
-            </p>
-            <button
-              className="outline"
-              disabled={editor.busy}
-              onClick={() => {
-                setFocusWork(undefined);
-                setTab("preview");
+        {!remote && (
+          <label className="demo-access">
+            Ver como
+            <select
+              value={access.kind === "artist" ? access.artistId : ""}
+              onChange={(e) => {
+                const artistId = e.target.value;
+                void go(adminPath("works")).then((ok) => {
+                  if (ok)
+                    setDemoAccess(
+                      artistId ? { kind: "artist", artistId } : CURATOR,
+                    );
+                });
               }}
             >
-              Prévia 3D
+              <option value="">Curadoria</option>
+              {state.draft.artists.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <button onClick={onExit}>Ver o site</button>
+        {onSignOut && <button onClick={onSignOut}>Sair</button>}
+      </div>
+      {!inForm && route.section !== "preview" && (
+        <nav className="admin-nav" aria-label="Seções do admin">
+          {tabs.map(([section, label]) => (
+            <button
+              key={section}
+              aria-current={route.section === section ? "page" : undefined}
+              className={route.section === section ? "active" : undefined}
+              onClick={() => open(section)}
+            >
+              {label}
             </button>
-          </section>
-          <div className="admin-tabs" role="tablist">
-            {tabs.map(([id, label]) => (
-              <button
-                key={id}
-                role="tab"
-                aria-selected={tab === id}
-                className={tab === id ? "active" : undefined}
-                disabled={editor.busy}
-                onClick={() => setTab(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {editor.notice && !editor.draft && (
-            <p className="editor-feedback" role="status">
-              {editor.notice}
-            </p>
-          )}
-          {tab === "records" && (
-            <div className="admin-workspace">
-              <section className="admin-records">
-                <div className="admin-heading">
-                  <h2>Obras</h2>
-                  <button
-                    disabled={editor.busy}
-                    className="primary"
-                    onClick={() => leaveRecord() && editor.create()}
-                  >
-                    + Nova obra
-                  </button>
-                </div>
-                <div className="status-filter" aria-label="Filtrar por status">
-                  <button
-                    className={filter === "all" ? "active" : undefined}
-                    onClick={() => setFilter("all")}
-                  >
-                    Todas ({records.length})
-                  </button>
-                  {RECORD_STATUSES.map((s) => (
-                    <button
-                      key={s}
-                      className={filter === s ? "active" : undefined}
-                      onClick={() => setFilter(s)}
-                    >
-                      {filterLabels[s]} ({counts[s]})
-                    </button>
-                  ))}
-                </div>
-                {visible.map((w) => (
-                  <button
-                    disabled={editor.busy}
-                    key={w.record.id}
-                    className={
-                      editor.draft?.record.id === w.record.id
-                        ? "record active"
-                        : "record"
-                    }
-                    onClick={() => leaveRecord() && editor.edit(w.record.id)}
-                  >
-                    {w.image ? (
-                      <img src={w.image} alt="" />
-                    ) : (
-                      <span className="record-icon">◈</span>
-                    )}
-                    <span>
-                      <b>{w.record.title}</b>
-                      <small>
-                        {w.author}
-                        {w.room && ` · ${w.room}`}
-                      </small>
-                      <span className={`status-pill status-${w.status}`}>
-                        {recordStatusLabels[w.status]}
-                      </span>
-                    </span>
-                  </button>
-                ))}
-                {!visible.length && (
-                  <p className="editor-hint">Nenhuma obra com este status.</p>
-                )}
-                {!remote && (
-                  <button
-                    disabled={editor.busy}
-                    className="reset-link"
-                    onClick={() => void editor.reset()}
-                  >
-                    Restaurar acervo de exemplo
-                  </button>
-                )}
-              </section>
-              {editor.draft ? (
-                <RecordEditor
-                  draft={editor.draft}
-                  snapshot={draft}
-                  dirty={editor.dirty}
-                  busy={editor.busy}
-                  remote={remote}
-                  onChange={editor.setDraft}
-                  onPlace={editor.place}
-                  onUpload={editor.upload}
-                  onUploadAudio={editor.uploadAudio}
-                  onSave={editor.save}
-                  notice={editor.notice}
-                  onSavePreview={async () => {
-                    const id = editor.draft?.record.id;
-                    if (await editor.save()) {
-                      setFocusWork(id);
-                      setTab("preview");
-                    }
-                  }}
-                  onCancel={() => leaveRecord() && editor.discard()}
-                  onDelete={editor.remove}
-                  onSwap={editor.swap}
-                />
-              ) : (
-                <section className="editor-panel">
-                  <h2>Selecione uma obra</h2>
-                  <p>
-                    Escolha uma obra na lista para editar, ou crie uma nova.
-                    Cada obra tem um status: <b>Publicada</b> aparece no site,{" "}
-                    <b>Rascunho</b> fica só para a equipe e <b>Desativada</b>{" "}
-                    fica guardada fora do site.
-                  </p>
-                </section>
-              )}
-            </div>
-          )}
-          {tab === "artists" && (
-            <ArtistEditor
-              key={state.revision}
-              artists={draft.artists}
-              busy={editor.busy}
-              onSave={editor.saveArtist}
-            />
-          )}
-          {tab === "exhibition" && (
-            <>
-              <RoomEditor
-                key={`rooms-${state.revision}`}
-                snapshot={draft}
-                busy={editor.busy}
-                onSave={editor.saveRoom}
-                onDelete={editor.deleteRoom}
-                onOrder={editor.reorderRooms}
-              />
-              <ExhibitionEditor
-                key={`exhibition-${state.revision}`}
-                snapshot={draft}
-                live={onAir}
-                busy={editor.busy}
-                onSave={editor.saveExhibition}
-                onPublish={editor.publish}
-                onArchive={editor.archive}
-              />
-            </>
-          )}
-          {remote && loadLocalDraft && (
-            <LocalImport
-              repository={repository}
-              revision={state.revision}
-              load={loadLocalDraft}
-              onChange={onChange}
-            />
-          )}
-        </main>
+          ))}
+        </nav>
       )}
-      {tab === "preview" && (
-        <>
-          <div className="admin-preview-toolbar">
-            <button onClick={() => setTab("records")}>
-              ← Voltar ao editor
-            </button>
-            <span>
-              Prévia com obras publicadas e rascunhos. Desativadas não aparecem.
-            </span>
-          </div>
-          <VisitPage
-            works={selectArtworks(draft)}
-            rooms={draft.rooms}
-            onSelect={setSelected}
-            disabled={!!selected}
-            initialWorkId={focusWork}
-            initialGuided={false}
-          />
-        </>
+      {!onAir && curator && !inForm && route.section !== "preview" && (
+        <p className="off-air-warning" role="status">
+          A exposição está fora do ar: o site não mostra nenhuma obra.{" "}
+          <button className="link-button" onClick={() => open("rooms")}>
+            Colocar no ar
+          </button>
+        </p>
       )}
+      {route.section === "preview" ? (
+        content
+      ) : (
+        <main className="admin">{content}</main>
+      )}
+      <Toast notice={editor.notice} onDismiss={editor.dismissNotice} />
       {selected && (
         <ArtworkDialog selected={selected} onClose={() => setSelected(null)} />
       )}
+    </div>
+  );
+}
+function NotFound({ text, onBack }: { text: string; onBack: () => void }) {
+  return (
+    <div className="empty-state">
+      <p>{text}</p>
+      <button className="outline" onClick={onBack}>
+        Voltar à lista
+      </button>
     </div>
   );
 }

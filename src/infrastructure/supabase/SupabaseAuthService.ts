@@ -1,17 +1,45 @@
-import type { AuthEvent, AuthService } from "../../domain/auth";
+import type { AuthEvent, AuthIdentity, AuthService } from "../../domain/auth";
 import type { RemoteClient } from "./client";
 export class SupabaseAuthService implements AuthService {
   constructor(private client: RemoteClient) {}
   async current() {
     const { data, error } = await this.client.auth.getSession();
     if (error) throw error;
-    if (!data.session) return { userId: "", email: "", editor: false };
-    const result = await this.client.rpc("desvio_is_editor");
-    if (result.error) throw result.error;
-    return {
+    if (!data.session)
+      return {
+        userId: "",
+        email: "",
+        editor: false,
+        role: null,
+        artistId: null,
+      };
+    const base = {
       userId: data.session.user.id,
       email: data.session.user.email ?? "",
-      editor: result.data === true,
+    };
+    const who = await this.client.rpc("desvio_whoami");
+    // Before the artist-accounts migration only curators exist.
+    if (who.error?.code === "PGRST202") {
+      const result = await this.client.rpc("desvio_is_editor");
+      if (result.error) throw result.error;
+      const editor = result.data === true;
+      return {
+        ...base,
+        editor,
+        role: editor ? ("curator" as const) : null,
+        artistId: null,
+      };
+    }
+    if (who.error) throw who.error;
+    const { role, artistId } = (who.data ?? {}) as {
+      role?: AuthIdentity["role"];
+      artistId?: string | null;
+    };
+    return {
+      ...base,
+      editor: role === "admin" || role === "curator",
+      role: role ?? null,
+      artistId: artistId ?? null,
     };
   }
   subscribe(onChange: (event: AuthEvent) => void) {

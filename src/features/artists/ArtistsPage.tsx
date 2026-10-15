@@ -16,6 +16,14 @@ export default function ArtistsPage({
       <div className="artist-grid">
         {artists.map((a) => (
           <article key={a.id}>
+            {a.photo?.src && (
+              <img
+                className="artist-photo"
+                src={a.photo.src}
+                alt={`Retrato de ${a.name}`}
+                loading="lazy"
+              />
+            )}
             <small>{a.location}</small>
             <h2>{a.name}</h2>
             <p>{a.bio}</p>
@@ -31,9 +39,11 @@ export default function ArtistsPage({
                   {w.title} ↗
                 </button>
               ))}
-            <a href={a.source} target="_blank" rel="noopener noreferrer">
-              Fonte da trajetória ↗
-            </a>
+            {a.source && (
+              <a href={a.source} target="_blank" rel="noopener noreferrer">
+                Fonte da trajetória ↗
+              </a>
+            )}
           </article>
         ))}
       </div>

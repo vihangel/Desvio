@@ -1,30 +1,44 @@
 import { useState } from "react";
 import type {
   CollectionSnapshot,
+  ExhibitionRoom,
   RecordDraft,
   Vector3,
 } from "../../domain/entities";
 import { roomSlots, presentationFor, slotSupports } from "../../domain/slots";
+import { Field } from "./ui";
+const slotLabel = (id: string) =>
+  id
+    .replace(/wall-left-(\d)/, (_, n) => `Parede esquerda · ${Number(n) + 1}`)
+    .replace(/wall-right-(\d)/, (_, n) => `Parede direita · ${Number(n) + 1}`)
+    .replace("pedestal-front", "Centro · frente")
+    .replace("pedestal-back", "Centro · fundo")
+    .replace(/pedestal-(\d)/, (_, n) => `Objeto · ${Number(n) + 1}`);
 export default function PlacementFields({
   draft,
   snapshot,
+  rooms,
   onPlace,
   onChange,
   onSwap,
+  dirty,
 }: {
-  onSwap?: (id: string) => Promise<void>;
   draft: RecordDraft;
   snapshot: CollectionSnapshot;
+  rooms: ExhibitionRoom[];
   onPlace: (
     roomId: string,
     slotId?: string,
     type?: "image" | "model" | "video",
   ) => void;
   onChange: (draft: RecordDraft) => void;
+  onSwap?: (id: string) => Promise<void>;
+  dirty: boolean;
 }) {
   const [swapId, setSwapId] = useState("");
   const { record, media, placement } = draft;
-  const room = snapshot.rooms.find((r) => r.id === placement.roomId)!;
+  const room =
+    snapshot.rooms.find((r) => r.id === placement.roomId) ?? rooms[0];
   const updateVector = (
     key: "position" | "rotation" | "scale",
     index: number,
@@ -34,22 +48,29 @@ export default function PlacementFields({
     vector[index] = value;
     onChange({ ...draft, placement: { ...placement, [key]: vector } });
   };
+  const roomIds = new Set(rooms.map((r) => r.id));
+  const swapOptions = snapshot.placements.filter(
+    (p) =>
+      p.recordId !== record.id &&
+      roomIds.has(p.roomId) &&
+      snapshot.media.find((m) => m.id === p.mediaId)?.type === media.type,
+  );
   return (
     <>
-      <h3>Montagem</h3>
-      <div className="editor-two">
-        <label>
-          Sala
+      <div className="field-row">
+        <Field label="Sala">
           <select value={room.id} onChange={(e) => onPlace(e.target.value)}>
-            {snapshot.rooms.map((r) => (
+            {rooms.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
               </option>
             ))}
           </select>
-        </label>
-        <label>
-          Posição na sala
+        </Field>
+        <Field
+          label="Posição na sala"
+          hint="Posições ocupadas aparecem desativadas."
+        >
           <select
             value={placement.slotId}
             onChange={(e) => onPlace(room.id, e.target.value)}
@@ -67,85 +88,38 @@ export default function PlacementFields({
                       p.slotId === s.id,
                   )}
                 >
-                  {s.id
-                    .replace("wall-left-", "Parede esquerda · ")
-                    .replace("wall-right-", "Parede direita · ")
-                    .replace("pedestal-front", "Centro · frente")
-                    .replace("pedestal-back", "Centro · fundo")
-                    .replace("pedestal-", "Objeto · ")}
+                  {slotLabel(s.id)}
                 </option>
               ))}
           </select>
-        </label>
+        </Field>
       </div>
-      <label>
-        Apresentação
-        <select
-          value={presentationFor(placement, media.type)}
-          onChange={(e) =>
-            onChange({
-              ...draft,
-              placement: {
-                ...placement,
-                presentation: e.target.value as "frame" | "pedestal" | "floor",
-              },
-            })
-          }
-        >
-          {media.type !== "model" ? (
-            <option value="frame">Quadro / tela na parede</option>
-          ) : (
-            <>
-              <option value="pedestal">Objeto 3D sobre pedestal</option>
-              <option value="floor">Objeto 3D no chão</option>
-            </>
-          )}
-        </select>
-      </label>
-      <div className="placement-controls">
-        <fieldset>
-          <legend>Posição (metros)</legend>
-          {["X — lateral", "Y — altura", "Z — profundidade"].map(
-            (label, index) => (
-              <label key={label}>
-                {label}
-                <input
-                  type="number"
-                  step={0.1}
-                  value={placement.position[index]}
-                  onChange={(e) =>
-                    updateVector("position", index, Number(e.target.value))
-                  }
-                />
-              </label>
-            ),
-          )}
-        </fieldset>
-        <fieldset>
-          <legend>Rotação (graus)</legend>
-          {["X", "Y", "Z"].map((axis, index) => (
-            <label key={axis}>
-              {axis}
-              <input
-                type="number"
-                step={5}
-                value={Math.round((placement.rotation[index] * 180) / Math.PI)}
-                onChange={(e) =>
-                  updateVector(
-                    "rotation",
-                    index,
-                    (Number(e.target.value) * Math.PI) / 180,
-                  )
-                }
-              />
-            </label>
-          ))}
-        </fieldset>
-      </div>
-      <label>
-        Tamanho proporcional
+      {media.type === "model" && (
+        <Field label="Apresentação">
+          <select
+            value={presentationFor(placement, media.type)}
+            onChange={(e) =>
+              onChange({
+                ...draft,
+                placement: {
+                  ...placement,
+                  presentation: e.target.value as "pedestal" | "floor",
+                },
+              })
+            }
+          >
+            <option value="pedestal">Sobre pedestal</option>
+            <option value="floor">No chão</option>
+          </select>
+        </Field>
+      )}
+      <Field
+        label="Tamanho"
+        hint="1 é o tamanho padrão; 2 dobra, 0,5 reduz pela metade."
+      >
         <input
           type="number"
+          inputMode="decimal"
           min={0.1}
           max={4}
           step={0.1}
@@ -158,47 +132,91 @@ export default function PlacementFields({
             });
           }}
         />
-      </label>
-      <button
-        className="outline"
-        onClick={() => onPlace(room.id, placement.slotId)}
-      >
-        Restaurar posição sugerida
-      </button>
-      {onSwap && (
-        <>
-          <label>
-            Trocar posição com outra obra
-            <select value={swapId} onChange={(e) => setSwapId(e.target.value)}>
-              <option value="">Selecione uma obra</option>
-              {snapshot.placements
-                .filter(
-                  (p) =>
-                    p.recordId !== record.id &&
-                    snapshot.media.find((m) => m.id === p.mediaId)?.type ===
-                      media.type,
-                )
-                .map((p) => (
-                  <option key={p.id} value={p.recordId}>
-                    {snapshot.records.find((r) => r.id === p.recordId)?.title} ·{" "}
-                    {snapshot.rooms.find((r) => r.id === p.roomId)?.name}
-                  </option>
-                ))}
+      </Field>
+      <details className="advanced">
+        <summary>Ajuste fino de posição e rotação</summary>
+        <div className="placement-controls">
+          <fieldset>
+            <legend>Posição (metros)</legend>
+            {["X — lateral", "Y — altura", "Z — profundidade"].map(
+              (label, index) => (
+                <Field key={label} label={label}>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step={0.1}
+                    value={placement.position[index]}
+                    onChange={(e) =>
+                      updateVector("position", index, Number(e.target.value))
+                    }
+                  />
+                </Field>
+              ),
+            )}
+          </fieldset>
+          <fieldset>
+            <legend>Rotação (graus)</legend>
+            {["X", "Y", "Z"].map((axis, index) => (
+              <Field key={axis} label={axis}>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step={5}
+                  value={Math.round(
+                    (placement.rotation[index] * 180) / Math.PI,
+                  )}
+                  onChange={(e) =>
+                    updateVector(
+                      "rotation",
+                      index,
+                      (Number(e.target.value) * Math.PI) / 180,
+                    )
+                  }
+                />
+              </Field>
+            ))}
+          </fieldset>
+        </div>
+        <button
+          className="outline"
+          onClick={() => onPlace(room.id, placement.slotId)}
+        >
+          Voltar à posição sugerida
+        </button>
+      </details>
+      {onSwap && swapOptions.length > 0 && (
+        <div className="swap-box">
+          <Field
+            label="Trocar de lugar com outra obra"
+            hint={
+              dirty
+                ? "Salve esta obra antes de trocar de lugar."
+                : "As duas obras trocam de posição na hora."
+            }
+          >
+            <select
+              value={swapId}
+              disabled={dirty}
+              onChange={(e) => setSwapId(e.target.value)}
+            >
+              <option value="">Escolha uma obra</option>
+              {swapOptions.map((p) => (
+                <option key={p.id} value={p.recordId}>
+                  {snapshot.records.find((r) => r.id === p.recordId)?.title} ·{" "}
+                  {snapshot.rooms.find((r) => r.id === p.roomId)?.name}
+                </option>
+              ))}
             </select>
-          </label>
-          <button disabled={!swapId} onClick={() => void onSwap(swapId)}>
-            Trocar posições salvas
+          </Field>
+          <button
+            className="outline"
+            disabled={!swapId || dirty}
+            onClick={() => void onSwap(swapId).then(() => setSwapId(""))}
+          >
+            Trocar de lugar
           </button>
-          <small>
-            A troca usa a montagem salva das duas obras. Salve antes os ajustes
-            desta ficha.
-          </small>
-        </>
+        </div>
       )}
-      <small>
-        Use a prévia 3D do rascunho após salvar para conferir distâncias e
-        enquadramento.
-      </small>
     </>
   );
 }

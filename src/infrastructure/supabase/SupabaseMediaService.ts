@@ -12,6 +12,10 @@ import type { MediaAsset } from "../../domain/entities";
 import type { RemoteClient } from "./client";
 export class SupabaseMediaService implements MediaService {
   readonly modelLimit = 24_000_000;
+  async optimizeImage(file: UploadSource, maxSize: number) {
+    const { optimizeImage } = await import("../media/imageOptimizer");
+    return optimizeImage(file, maxSize);
+  }
   async optimizeModel(file: UploadSource, options?: ModelOptimizationOptions) {
     const { optimizeModel } = await import("../media/modelOptimizer");
     return optimizeModel(file, options);

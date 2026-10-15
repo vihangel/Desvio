@@ -1,7 +1,11 @@
+export type AuthRole = "admin" | "curator" | "artist";
 export interface AuthIdentity {
   userId: string;
   email: string;
   editor: boolean;
+  role: AuthRole | null;
+  // Linked artist when the account belongs to an artist.
+  artistId: string | null;
 }
 export type AuthEvent =
   "signed_in" | "signed_out" | "password_recovery" | "refreshed";

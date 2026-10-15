@@ -1,5 +1,5 @@
 import { youtubeId } from "./youtube";
-import type { CollectionSnapshot, RecordDraft } from "./entities";
+import type { Artist, CollectionSnapshot, RecordDraft } from "./entities";
 import { roomSlots, presentationFor, slotSupports } from "./slots";
 export function safeSource(value: string, allowLocal = false): boolean {
   if (
@@ -174,4 +174,33 @@ export function validatePublication(snapshot: CollectionSnapshot): void {
       throw new Error("A exposição contém vínculos incompletos.");
     validateLiveRecord({ record, media, placement }, snapshot);
   }
+}
+export function validateArtist(artist: Artist): void {
+  if (!artist.name.trim()) throw new Error("Informe o nome da pessoa artista.");
+  if (artist.source && !safeSource(artist.source))
+    throw new Error("A fonte deve ser uma URL HTTP ou HTTPS.");
+  if (artist.photo?.src && !safeSource(artist.photo.src, true))
+    throw new Error("Endereço da foto inválido.");
+}
+// Explains which works or rooms still point at the artist.
+export function assertArtistUnused(
+  snapshot: CollectionSnapshot,
+  artistId: string,
+): void {
+  const works = snapshot.records.filter((r) =>
+    r.credits.some((c) => c.artistId === artistId),
+  );
+  if (works.length)
+    throw new Error(
+      `Remova os créditos desta pessoa artista antes de excluí-la: ${works
+        .map((w) => `“${w.title}”`)
+        .join(", ")}.`,
+    );
+  const rooms = snapshot.rooms.filter((r) => r.artistIds?.includes(artistId));
+  if (rooms.length)
+    throw new Error(
+      `Desvincule esta pessoa artista das salas antes de excluí-la: ${rooms
+        .map((r) => r.name)
+        .join(", ")}.`,
+    );
 }

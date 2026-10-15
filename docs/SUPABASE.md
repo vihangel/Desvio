@@ -66,3 +66,17 @@ O link de redefinição abre `/admin/redefinir-senha`; o cliente Supabase lê o 
 Cada obra tem status **Publicada**, **Rascunho** ou **Desativada**. Toda operação do editor regrava a edição pública a partir das obras publicadas (`20261014210000_desvio_record_status.sql`), então salvar uma obra publicada atualiza o site imediatamente. “Tirar exposição do ar” esvazia o site sem mudar o status das obras. A migration converte o acervo atual: obras que estavam no site viram Publicada, as demais Rascunho.
 
 Para trazer um acervo salvo no modo demonstrativo, aplicar `20261014200000_desvio_replace_draft_from_local.sql` e `20261014210000_desvio_record_status.sql`. A importação substitui as obras salvas; as que estiverem com status Publicada vão para o site.
+
+## Contas de artista
+
+A curadoria convida uma pessoa artista na tela dela no admin (`/admin/artistas/<id>` → “Acesso da pessoa artista”). O convite chama a Edge Function `desvio-invite-artist`, que confere se quem chama é da curadoria, envia o e-mail de convite do Supabase e vincula a conta à artista em `desvio_artist_accounts`. O link do e-mail abre `/admin/redefinir-senha`, onde a pessoa cria a senha.
+
+A conta de artista vê e edita só as salas que listam aquela artista (`artistIds`) e as obras dessas salas (`desvio_artist_edit`). Nas salas, pode mudar nome, texto e capacidade; quem participa da sala e a ordem ficam com a curadoria. Obras salvas pela artista voltam para Rascunho com `reviewRequested`, e a curadoria as publica (o que limpa a marca). A artista só exclui obras em rascunho.
+
+Para ativar:
+
+1. Aplicar `20261015090000_desvio_artist_accounts.sql`.
+2. Publicar a função: `supabase functions deploy desvio-invite-artist`. Ela usa as variáveis padrão do projeto (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`); a chave de serviço nunca vai para o navegador.
+3. Manter `/admin/redefinir-senha` em Redirect URLs (já necessário para a redefinição de senha).
+
+Fotos de perfil ficam em `photo` (bucket/path) no conteúdo da artista e são legíveis pelo público quando a artista está na edição publicada.

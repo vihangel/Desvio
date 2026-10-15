@@ -2,8 +2,11 @@ import { useState } from "react";
 import type { AuthService } from "../../domain/auth";
 // Reached from the e-mailed link. Supabase reads the link and opens a
 // temporary session, so the person only types the new password here.
+const linkParams = new URLSearchParams(window.location.hash.slice(1));
+// Invites from the curators land here too, to create the first password.
+const invited = linkParams.get("type") === "invite";
 const linkError = (() => {
-  const params = new URLSearchParams(window.location.hash.slice(1));
+  const params = linkParams;
   return params.get("error_code") === "otp_expired"
     ? "Este link expirou ou já foi usado."
     : params.get("error_description");
@@ -28,7 +31,13 @@ export default function ResetPassword({
   return (
     <main className="admin admin-gate">
       <div className="eyebrow">ÁREA ADMINISTRATIVA</div>
-      <h1>Nova senha</h1>
+      <h1>{invited ? "Crie sua senha" : "Nova senha"}</h1>
+      {invited && signedIn && !loading && (
+        <p>
+          Você foi convidada para o Desvio. Defina uma senha para entrar e
+          cuidar das suas salas.
+        </p>
+      )}
       {loading ? (
         <p role="status">Validando o link…</p>
       ) : !signedIn ? (
@@ -66,7 +75,7 @@ export default function ResetPassword({
           }}
         >
           <label>
-            Nova senha
+            {invited ? "Senha" : "Nova senha"}
             <input
               type="password"
               autoComplete="new-password"
@@ -77,7 +86,7 @@ export default function ResetPassword({
             />
           </label>
           <label>
-            Repita a nova senha
+            Repita a senha
             <input
               type="password"
               autoComplete="new-password"
@@ -88,7 +97,11 @@ export default function ResetPassword({
             />
           </label>
           <button className="primary" disabled={busy}>
-            {busy ? "Salvando…" : "Salvar nova senha e entrar"}
+            {busy
+              ? "Salvando…"
+              : invited
+                ? "Criar senha e entrar"
+                : "Salvar nova senha e entrar"}
           </button>
           {error && <p role="alert">{error}</p>}
         </form>
