@@ -293,11 +293,17 @@ function AdminShell({
         onOpenRooms={() => open("rooms")}
         onSave={async (artist) => {
           const ok = await editor.saveArtist(artist);
-          if (ok && isNew)
+          if (ok && isNew) {
             await go(adminPath("artists", artist.id), {
               replace: true,
               force: true,
             });
+            if (accountService)
+              editor.notify(
+                `${artist.name} salva. Para dar acesso ao admin, use “Acesso da pessoa artista” nesta tela.`,
+                "success",
+              );
+          }
           return ok;
         }}
         onDelete={async (artist) => {

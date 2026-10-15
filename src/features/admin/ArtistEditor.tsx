@@ -257,6 +257,17 @@ export default function ArtistEditor({
             />
           </Field>
         </Section>
+        {isNew && onCreateAccess && (
+          <Section
+            title="Acesso da pessoa artista"
+            description="Para a pessoa entrar no admin e cuidar das próprias salas."
+          >
+            <p className="callout">
+              Salve a pessoa artista primeiro. Depois, nesta mesma tela, você
+              cria o acesso com o e-mail dela e recebe uma senha para enviar.
+            </p>
+          </Section>
+        )}
         {!isNew && onCreateAccess && (
           <Section
             title="Acesso da pessoa artista"
