@@ -24,6 +24,7 @@ import HomePage from "./features/home/HomePage";
 import CatalogPage from "./features/catalog/CatalogPage";
 import ArtistsPage from "./features/artists/ArtistsPage";
 import VisitPage from "./features/visit/VisitPage";
+import AboutPage from "./features/about/AboutPage";
 const LocalPreviewPage = import.meta.env.DEV
   ? lazy(() => import("./features/visit/LocalPreviewPage"))
   : null;
@@ -55,7 +56,13 @@ export default function App() {
       : [];
   return (
     <div className="app">
-      <Header go={navigate} />
+      <Header go={navigate} current={page} />
+      {page === "about" && (
+        <AboutPage
+          onVisit={() => navigate("visit")}
+          onCollection={() => navigate("catalog")}
+        />
+      )}
       {dataMode === "demo" && import.meta.env.DEV && page === "home" && (
         <div className="local-preview-link">
           <span>Obras de Linscker disponíveis para montagem local.</span>
@@ -75,12 +82,12 @@ export default function App() {
           {previewError}
         </p>
       )}
-      {loading && (
+      {loading && page !== "about" && (
         <main className="admin" role="status">
           Carregando acervo…
         </main>
       )}
-      {error && (
+      {error && page !== "about" && (
         <main className="admin">
           <p role="alert">{error}</p>
           <button onClick={() => void reload()}>Tentar novamente</button>

@@ -175,6 +175,8 @@ describe("domain and navigation", () => {
   });
   it("supports direct paths and identifies unknown routes", () => {
     expect(pageForPath("/obras")).toBe("catalog");
+    expect(pageForPath("/acervo")).toBe("catalog");
+    expect(pageForPath("/sobre")).toBe("about");
     expect(pageForPath("/artistas/")).toBe("artists");
     expect(pageForPath("/museu")).toBe("visit");
     expect(pageForPath("/admin")).toBe("admin");

@@ -9,7 +9,7 @@ export default function CatalogPage({
   return (
     <main className="admin public-collection">
       <div className="eyebrow">DESVIO · ACERVO TRANS DE MATO GROSSO</div>
-      <h1>Obras e projetos</h1>
+      <h1>Acervo</h1>
       <p>
         Explore as obras, os registros curatoriais e suas fontes. Imagens de
         catálogo demonstram a montagem; painéis editoriais identificam os demais

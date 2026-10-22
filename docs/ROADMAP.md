@@ -11,6 +11,7 @@ O **Museu do Desvio** é uma iniciativa virtual de valorização, preservação,
 A plataforma não deve ser apenas uma cópia digital de salas físicas. Ela deve permitir **contemplar obras originais em 2D, experienciar objetos 3D, criar instalações digitais autorizadas e acessar narrativas contextualizadas**, com liberdade para visitas não lineares. A tecnologia é meio de mediação, não um fim em si. A definição de museu do ICOM enfatiza acesso, inclusão, interpretação e participação comunitária [R1]; a literatura sobre aprendizagem informal mostra que contexto, motivação, orientação e escolha importam para o visitante [R2].
 
 **Equipe e residência (conforme texto de convite, sujeitos a confirmação pública):**
+
 - **Linscker Marim:** idealização, coordenação e direção do Museu do Desvio.
 - **Vih Angel:** codireção e desenvolvimento.
 - **Salas de residência propostas:** **Linscker Marim**, **Sol Ferreira** e **Alice e Anayumi** (sala compartilhada conforme nome do convite; papéis individuais e governança conjunta a confirmar).
@@ -30,30 +31,30 @@ A plataforma não deve ser apenas uma cópia digital de salas físicas. Ela deve
 
 Repositório: [vihangel/Desvio](https://github.com/vihangel/Desvio). A avaliação é de código e documentação, **não é uma validação integral do site em dispositivos reais**.
 
-| Dimensão | Já existe | Limite atual e oportunidade |
-| --- | --- | --- |
-| Visita | `src/features/visit/VisitPage.tsx`, `src/gallery/Player.tsx` | Primeira pessoa e joystick; guia ainda segue registros, sem roteiro curatorial independente. |
-| Salas | `src/gallery/Scene.tsx`, `src/domain/entities.ts` | Apenas `template: "corridor"`, módulos de 10 × 12 m com parede/iluminação programadas. |
-| Obras | `src/gallery/Painting.tsx`, `Sculpture.tsx`, `VideoArtwork.tsx` | Imagem, modelo e vídeo presentes; falta biblioteca de **elementos expositivos/cenográficos**. |
-| Montagem | `src/domain/slots.ts`, `Placement`, formulário admin | Posições numéricas e slots; falta **editor 3D WYSIWYG**, manipulação por eixos e edição de iluminação. |
-| Administração | `src/features/admin/*` e adaptadores Supabase | Conta, curadoria/artista, rascunho e mídia; precisam evoluir para propostas expográficas versionadas por sala. |
-| Publicação | `src/domain/publication.ts` | A edição pública é recalculada por status de obra; falta snapshot histórico da **exposição integral por residência**. |
-| VR | React Three Fiber e Three.js | Não há integração XR identificada; câmera atual é controlada diretamente pelo `Player`. |
-| Acervo | `CURADORIA.md` e fichas | Ampliar metadados de proveniência, autorização específica por derivação 3D e pedidos de correção. |
+| Dimensão      | Já existe                                                       | Limite atual e oportunidade                                                                                           |
+| ------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Visita        | `src/features/visit/VisitPage.tsx`, `src/gallery/Player.tsx`    | Primeira pessoa e joystick; guia ainda segue registros, sem roteiro curatorial independente.                          |
+| Salas         | `src/gallery/Scene.tsx`, `src/domain/entities.ts`               | Apenas `template: "corridor"`, módulos de 10 × 12 m com parede/iluminação programadas.                                |
+| Obras         | `src/gallery/Painting.tsx`, `Sculpture.tsx`, `VideoArtwork.tsx` | Imagem, modelo e vídeo presentes; falta biblioteca de **elementos expositivos/cenográficos**.                         |
+| Montagem      | `src/domain/slots.ts`, `Placement`, formulário admin            | Posições numéricas e slots; falta **editor 3D WYSIWYG**, manipulação por eixos e edição de iluminação.                |
+| Administração | `src/features/admin/*` e adaptadores Supabase                   | Conta, curadoria/artista, rascunho e mídia; precisam evoluir para propostas expográficas versionadas por sala.        |
+| Publicação    | `src/domain/publication.ts`                                     | A edição pública é recalculada por status de obra; falta snapshot histórico da **exposição integral por residência**. |
+| VR            | React Three Fiber e Three.js                                    | Não há integração XR identificada; câmera atual é controlada diretamente pelo `Player`.                               |
+| Acervo        | `CURADORIA.md` e fichas                                         | Ampliar metadados de proveniência, autorização específica por derivação 3D e pedidos de correção.                     |
 
 **Dívida documental:** README, `docs/ARQUITETURA.md` e `docs/SUPABASE.md` descrevem ciclos editoriais em momentos diferentes. Antes das mudanças de schema, harmonizar a versão vigente de publicação/rascunho e as migrações realmente aplicadas. Não sobrescrever dados nem executar migrações apenas por referência neste documento.
 
 ## 3. Prioridades e marcos
 
-| Marco | Priorização | Entrega demonstrável | Dependência |
-| --- | --- | --- | --- |
-| **M0 — Base segura do editor** | **P0** | Contratos, perfis, scene graph e salvamento versionado em rascunho | Modelo existente / compatibilidade |
-| **M1 — Editor expográfico 3D** | **P0 / prioridade máxima** | Selecionar, adicionar, mover, girar, escalar, iluminar, salvar e rever uma sala | M0 |
-| **M2 — Residências e ciclos de exposição** | **P0** | Sala permanente, proposta anual, aprovação e arquivo histórico | M0–M1 |
-| **M3 — Interpretação e dinamismo** | **P1** | Ambientes narrativos, mediação, roteiro curatorial, 2D + 3D | M1 |
-| **M4 — VR/WebXR opcional** | **P1, após estabilizar o editor** | Uma sala visitável em headset sem alterar controles web | M1 + testes |
-| **M5 — Sobre, participação e memória** | **P1** | Página institucional, processo de residência, linha do tempo e correções | Pode avançar em paralelo |
-| **M6 — NPC e diálogos** | **P2 / futuro** | Mediação por personagem/totem, primeiro com áudio roteirizado | M3–M4 |
+| Marco                                      | Priorização                       | Entrega demonstrável                                                            | Dependência                        |
+| ------------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------- |
+| **M0 — Base segura do editor**             | **P0**                            | Contratos, perfis, scene graph e salvamento versionado em rascunho              | Modelo existente / compatibilidade |
+| **M1 — Editor expográfico 3D**             | **P0 / prioridade máxima**        | Selecionar, adicionar, mover, girar, escalar, iluminar, salvar e rever uma sala | M0                                 |
+| **M2 — Residências e ciclos de exposição** | **P0**                            | Sala permanente, proposta anual, aprovação e arquivo histórico                  | M0–M1                              |
+| **M3 — Interpretação e dinamismo**         | **P1**                            | Ambientes narrativos, mediação, roteiro curatorial, 2D + 3D                     | M1                                 |
+| **M4 — VR/WebXR opcional**                 | **P1, após estabilizar o editor** | Uma sala visitável em headset sem alterar controles web                         | M1 + testes                        |
+| **M5 — Sobre, participação e memória**     | **P1**                            | Página institucional, processo de residência, linha do tempo e correções        | Pode avançar em paralelo           |
+| **M6 — NPC e diálogos**                    | **P2 / futuro**                   | Mediação por personagem/totem, primeiro com áudio roteirizado                   | M3–M4                              |
 
 P0/P1/P2 são prioridades, **não prazos ou compromissos financeiros**. Evitar publicar datas sem estimativa baseada no esforço e na disponibilidade de curadoria/artistas.
 
@@ -146,16 +147,16 @@ Começar com **elementos modulares + limites seguros**. Paredes móveis/abertura
 
 As condições abaixo reproduzem o **modelo proposto no convite**; ainda dependem de aceite e eventual formalização escrita com as pessoas residentes:
 
-| Regra da residência | Requisito sugerido |
-| --- | --- |
-| Sala exclusiva por residente | Vínculo estável `ResidentRoom` ↔ responsável ou coletivo; não ceder/repassar sala a outra pessoa sem decisão da direção/curadoria. |
-| Autoria da expografia | Residente cria a proposta e organiza cenário, obras e textos; obras coletivas são permitidas com créditos completos e protagonismo curatorial da residente. |
-| Aprovação institucional | Toda **nova proposta expositiva completa** passa por revisão e aprovação da direção/curadoria. |
-| Atualização | **Até 2 substituições integrais da exposição por ano**; não contabilizar simples ajuste de texto ou correção técnica como uma nova edição. |
-| Frequência mínima | Meta de **pelo menos 1 exposição por ano** de cada residência; emitir aviso e abrir diálogo antes de qualquer sanção automática. |
-| Permanência histórica | Ao entrar uma nova edição, preservar a anterior em arquivo navegável, com datas, ficha curatorial e autorização de disponibilidade. |
-| Voluntariado nesta etapa | Registrar que não há financiamento e que a participação inicial é voluntária e sem remuneração; não prometer recursos futuros. |
-| Oportunidades futuras | Prioridade proposta para residentes em futuros editais e serviços remunerados, **condicionada** às regras das chamadas e à disponibilidade de recursos. |
+| Regra da residência          | Requisito sugerido                                                                                                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sala exclusiva por residente | Vínculo estável `ResidentRoom` ↔ responsável ou coletivo; não ceder/repassar sala a outra pessoa sem decisão da direção/curadoria.                          |
+| Autoria da expografia        | Residente cria a proposta e organiza cenário, obras e textos; obras coletivas são permitidas com créditos completos e protagonismo curatorial da residente. |
+| Aprovação institucional      | Toda **nova proposta expositiva completa** passa por revisão e aprovação da direção/curadoria.                                                              |
+| Atualização                  | **Até 2 substituições integrais da exposição por ano**; não contabilizar simples ajuste de texto ou correção técnica como uma nova edição.                  |
+| Frequência mínima            | Meta de **pelo menos 1 exposição por ano** de cada residência; emitir aviso e abrir diálogo antes de qualquer sanção automática.                            |
+| Permanência histórica        | Ao entrar uma nova edição, preservar a anterior em arquivo navegável, com datas, ficha curatorial e autorização de disponibilidade.                         |
+| Voluntariado nesta etapa     | Registrar que não há financiamento e que a participação inicial é voluntária e sem remuneração; não prometer recursos futuros.                              |
+| Oportunidades futuras        | Prioridade proposta para residentes em futuros editais e serviços remunerados, **condicionada** às regras das chamadas e à disponibilidade de recursos.     |
 
 **Questões de governança a formalizar (não codificar como verdades definitivas):** como contar “ano” (ano-calendário ou janela de 12 meses); se a primeira montagem do ano conta como uma das duas atualizações; o tratamento de exposições em coautoria; suspensão/saída de residente; ausência de proposta no período; autorização de manter obras arquivadas após saída; funcionamento da sala “Alice e Anayumi”.
 
@@ -164,7 +165,7 @@ As condições abaixo reproduzem o **modelo proposto no convite**; ainda depende
 `Residência → Criar proposta de exposição → Montar cenário 3D + selecionar obras → Revisar direitos/acessibilidade → Enviar à curadoria → Solicitar ajustes ou aprovar → Publicar snapshot → Arquivar edição anterior`.
 
 - A apresentação de uma nova exposição é uma **versão completa** e coerente (não mera adição avulsa de uma obra na exposição corrente).
-- Correção técnica/de crédito pode gerar *revisão menor* da mesma edição com histórico e motivo.
+- Correção técnica/de crédito pode gerar _revisão menor_ da mesma edição com histórico e motivo.
 - A curadoria pode devolver a proposta com comentários por obra/elemento, sem apagar o trabalho artístico.
 - Guardar número e ano das substituições aprovadas, sem alterar retroativamente uma versão publicada.
 - Escrever testes de permissões (residente versus curadoria), contadores anuais, arquivamento, restauração e coautoria.
@@ -267,12 +268,12 @@ Eventos agregados e opcionais de navegação (ex.: entrada/salida de sala, carre
 
 ### Testes recomendados por marco
 
-| Público | Tarefas | Indicadores |
-| --- | --- | --- |
-| Curadoria | Criar sala, montar e aprovar edição | Erros, tempo, segurança editorial, recuperação de alterações |
-| Pessoa residente | Criar cenário, mover 2D/GLB, iluminar e enviar | Autonomia, clareza do editor, satisfação com representação da obra |
-| Visitante desktop/mobile | Achar artista, chegar a obra, ler ficha, concluir percurso | Sucesso, desorientação, compreensão, satisfação, acessibilidade |
-| Visitante em headset | Entrar, teletransportar, selecionar, sair | Conforto, mal-estar, compreensão, estabilidade e orientação |
+| Público                  | Tarefas                                                    | Indicadores                                                        |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------ |
+| Curadoria                | Criar sala, montar e aprovar edição                        | Erros, tempo, segurança editorial, recuperação de alterações       |
+| Pessoa residente         | Criar cenário, mover 2D/GLB, iluminar e enviar             | Autonomia, clareza do editor, satisfação com representação da obra |
+| Visitante desktop/mobile | Achar artista, chegar a obra, ler ficha, concluir percurso | Sucesso, desorientação, compreensão, satisfação, acessibilidade    |
+| Visitante em headset     | Entrar, teletransportar, selecionar, sair                  | Conforto, mal-estar, compreensão, estabilidade e orientação        |
 
 Método: comparação qualitativa e quantitativa entre galeria atual e sala-piloto; tarefas, observação, entrevistas, questionários e sessões de cocriação. Falk e Storksdieck fundamentam a atenção ao contexto e ao livre arbítrio [R2]. Nina Simon propõe instituições culturalmente participativas [R4].
 
@@ -288,17 +289,17 @@ Método: comparação qualitativa e quantitativa entre galeria atual e sala-pilo
 
 ## 12. Riscos e decisões abertas
 
-| Risco | Mitigação |
-| --- | --- |
-| Editor livre quebrar portas, escala ou câmera | Gizmos com limites, encaixe, validação de colisões e prévia do visitante. |
-| Luzes e assets degradarem mobile e VR | Perfis de qualidade e orçamento medido por aparelho, sombras seletivas, streaming por sala. |
-| Efeitos alterarem sentido de uma obra | Aprovação da artista, descrição da interpretação e possibilidade de desativar elementos. |
-| Derivações 3D confundidas com obra original | Metadado `relationType`, autoria da derivação e rótulo público. |
-| Residências confundidas com exposições atuais | Separar sala permanente e `ExhibitionEdition` histórica. |
-| Conteúdo de catálogo sem autorização | Manter privado/identificado como prévia, regularizar direitos antes de divulgação pública. |
-| WebXR indisponível | Detecção de capacidade, VR opcional, fallback para desktop/mobile e catálogo. |
-| Mediação por IA inventar fala de artista | Postergar, fontes vinculadas, aprovação humana, não clonar voz/identidade. |
-| Convite interpretado como aceite/remuneração garantida | Comunicar status de proposta e termos condicionais, não anunciar adesões não confirmadas. |
+| Risco                                                  | Mitigação                                                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Editor livre quebrar portas, escala ou câmera          | Gizmos com limites, encaixe, validação de colisões e prévia do visitante.                   |
+| Luzes e assets degradarem mobile e VR                  | Perfis de qualidade e orçamento medido por aparelho, sombras seletivas, streaming por sala. |
+| Efeitos alterarem sentido de uma obra                  | Aprovação da artista, descrição da interpretação e possibilidade de desativar elementos.    |
+| Derivações 3D confundidas com obra original            | Metadado `relationType`, autoria da derivação e rótulo público.                             |
+| Residências confundidas com exposições atuais          | Separar sala permanente e `ExhibitionEdition` histórica.                                    |
+| Conteúdo de catálogo sem autorização                   | Manter privado/identificado como prévia, regularizar direitos antes de divulgação pública.  |
+| WebXR indisponível                                     | Detecção de capacidade, VR opcional, fallback para desktop/mobile e catálogo.               |
+| Mediação por IA inventar fala de artista               | Postergar, fontes vinculadas, aprovação humana, não clonar voz/identidade.                  |
+| Convite interpretado como aceite/remuneração garantida | Comunicar status de proposta e termos condicionais, não anunciar adesões não confirmadas.   |
 
 ## 13. Primeiras issues recomendadas
 
@@ -319,18 +320,18 @@ Método: comparação qualitativa e quantitativa entre galeria atual e sala-pilo
 
 As referências a seguir fundamentam princípios de museologia, documentação, acessibilidade e possibilidades técnicas. **As features exatas são decisões de produto para validar com a equipe e residentes; não são funcionalidades prescritas literalmente pelas fontes.**
 
-- **[R1]** ICOM (2022). *Museum Definition*. Acesso, inclusão, interpretação e participação. https://icom.museum/en/resources/standards-guidelines/museum-definition/
-- **[R2]** Falk, J. H.; Storksdieck, M. (2005). *Using the contextual model of learning to understand visitor learning from a science center exhibition*. Science Education, 89(5), 744–778. Escolha, orientação, contexto e exposição. https://doi.org/10.1002/sce.20078
-- **[R3]** Trans Metadata Collective (2023), v2.5. *Metadata Best Practices for Trans and Gender Diverse Resources*. Descrição responsável e linguagem de metadados. https://zenodo.org/records/10076876
-- **[R4]** Simon, N. (2010). *The Participatory Museum*. Participação, cocriação e avaliação de projetos participativos. https://participatorymuseum.org/read/
-- **[R5]** European Commission / Expert Group on Digital Cultural Heritage and Europeana (2020). *Basic principles and tips for 3D digitisation of cultural heritage*. Utilidade, qualidade, direitos, versões e preservação. https://digital-strategy.ec.europa.eu/en/library/basic-principles-and-tips-3d-digitisation-cultural-heritage
-- **[R6]** Collections Trust. *Spectrum 5.1*, especialmente `Rights management`, `Reproduction`, `Cataloguing` e `Use of collections`. Gestão documental, autorizações e rastreabilidade. https://collectionstrust.org.uk/spectrum/procedures/
-- **[R7]** W3C (2021). *XR Accessibility User Requirements (XAUR)*. Locomoção alternativa, conforto, controle de tempo, texto para áudio e minimização de efeitos. https://www.w3.org/TR/xaur/
-- **[R8]** W3C (2024). *Web Content Accessibility Guidelines (WCAG) 2.2*. Navegação por teclado, operação previsível, pausas, foco e alternativas de interação. https://www.w3.org/TR/WCAG22/
-- **[R9]** ICOMOS, conforme UNESCO World Heritage Centre. *Charter for the Interpretation and Presentation of Cultural Heritage Sites*: acesso, fontes, contexto, autenticidade, inclusão e avaliação. https://whc.unesco.org/en/faq/290
-- **[R10]** Mozilla MDN. *WebXR Device API*. Capacidades, compatibilidade, contexto seguro e restrições do navegador. https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API
-- **[R11]** pmndrs. *@react-three/xr — Convert to XR*. Caminho técnico para adaptar app React Three Fiber a XR (com testes de compatibilidade e regressão). https://pmndrs.github.io/xr/docs/getting-started/convert-to-xr
-- **[R12]** Caswell, M.; Cifor, M. (2016). *From Human Rights to Feminist Ethics: Radical Empathy in the Archives*. Archivaria, 81, 23–43. Ética do cuidado e responsabilidade com criadores/sujeitos/comunidades. https://archivaria.ca/index.php/archivaria/article/view/13557
+- **[R1]** ICOM (2022). _Museum Definition_. Acesso, inclusão, interpretação e participação. https://icom.museum/en/resources/standards-guidelines/museum-definition/
+- **[R2]** Falk, J. H.; Storksdieck, M. (2005). _Using the contextual model of learning to understand visitor learning from a science center exhibition_. Science Education, 89(5), 744–778. Escolha, orientação, contexto e exposição. https://doi.org/10.1002/sce.20078
+- **[R3]** Trans Metadata Collective (2023), v2.5. _Metadata Best Practices for Trans and Gender Diverse Resources_. Descrição responsável e linguagem de metadados. https://zenodo.org/records/10076876
+- **[R4]** Simon, N. (2010). _The Participatory Museum_. Participação, cocriação e avaliação de projetos participativos. https://participatorymuseum.org/read/
+- **[R5]** European Commission / Expert Group on Digital Cultural Heritage and Europeana (2020). _Basic principles and tips for 3D digitisation of cultural heritage_. Utilidade, qualidade, direitos, versões e preservação. https://digital-strategy.ec.europa.eu/en/library/basic-principles-and-tips-3d-digitisation-cultural-heritage
+- **[R6]** Collections Trust. _Spectrum 5.1_, especialmente `Rights management`, `Reproduction`, `Cataloguing` e `Use of collections`. Gestão documental, autorizações e rastreabilidade. https://collectionstrust.org.uk/spectrum/procedures/
+- **[R7]** W3C (2021). _XR Accessibility User Requirements (XAUR)_. Locomoção alternativa, conforto, controle de tempo, texto para áudio e minimização de efeitos. https://www.w3.org/TR/xaur/
+- **[R8]** W3C (2024). _Web Content Accessibility Guidelines (WCAG) 2.2_. Navegação por teclado, operação previsível, pausas, foco e alternativas de interação. https://www.w3.org/TR/WCAG22/
+- **[R9]** ICOMOS, conforme UNESCO World Heritage Centre. _Charter for the Interpretation and Presentation of Cultural Heritage Sites_: acesso, fontes, contexto, autenticidade, inclusão e avaliação. https://whc.unesco.org/en/faq/290
+- **[R10]** Mozilla MDN. _WebXR Device API_. Capacidades, compatibilidade, contexto seguro e restrições do navegador. https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API
+- **[R11]** pmndrs. _@react-three/xr — Convert to XR_. Caminho técnico para adaptar app React Three Fiber a XR (com testes de compatibilidade e regressão). https://pmndrs.github.io/xr/docs/getting-started/convert-to-xr
+- **[R12]** Caswell, M.; Cifor, M. (2016). _From Human Rights to Feminist Ethics: Radical Empathy in the Archives_. Archivaria, 81, 23–43. Ética do cuidado e responsabilidade com criadores/sujeitos/comunidades. https://archivaria.ca/index.php/archivaria/article/view/13557
 
 ---
 
