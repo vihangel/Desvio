@@ -1,5 +1,7 @@
 # Desvio
 
+📍 **Planejamento:** [Roadmap museológico e técnico — editor expográfico 3D, residências artísticas, WebXR e mediação](docs/ROADMAP.md). Documento de proposta para discussão e implementação incremental, atualizado em 22/10/2026.
+
 Museu virtual 3D, em React + TypeScript + React Three Fiber + Three.js. A primeira mostra de pesquisa é **Corpos, fios e territórios**, uma prévia do Acervo Trans de Mato Grosso.
 
 ## Executar
