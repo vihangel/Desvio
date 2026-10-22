@@ -1,0 +1,343 @@
+/* About page: same warm surfaces, serif display type and red accent as Home. */
+.about {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 72px 32px 96px;
+}
+.about h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.about p {
+  line-height: 1.7;
+  color: var(--color-muted);
+}
+
+/* Opening */
+.about-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: 48px;
+  align-items: end;
+}
+.about-hero h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(48px, 7vw, 88px);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 18px 0 22px;
+}
+.about-hero h1 em {
+  color: var(--color-accent);
+}
+.about-hero p {
+  font-size: 20px;
+  max-width: 620px;
+  margin: 0;
+}
+.about-facts {
+  margin: 0;
+  display: grid;
+  border-top: 2px solid var(--color-ink);
+}
+.about-facts div {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #dedbd2;
+}
+.about-facts dt {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-muted);
+  padding-top: 3px;
+}
+.about-facts dd {
+  margin: 0;
+  color: var(--color-text);
+  line-height: 1.45;
+}
+.about-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 56px 0 24px;
+  grid-auto-rows: 200px;
+}
+.about-strip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Numbered rows: title on the left, text on the right */
+.about-row,
+.about-visit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
+  gap: 48px;
+  padding: 56px 0;
+  border-top: 1px solid #dedbd2;
+  scroll-margin-top: 16px;
+}
+.about-row h2,
+.about-visit h2 {
+  font-size: clamp(28px, 3.2vw, 38px);
+  line-height: 1.15;
+  margin: 0;
+}
+.about-row h2 span,
+.about-visit h2 span {
+  display: block;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--color-accent-text);
+  margin-bottom: 12px;
+}
+.about-row p:first-child {
+  margin-top: 0;
+}
+.about-quote {
+  font-family: Georgia, serif;
+  font-size: 24px;
+  line-height: 1.45 !important;
+  color: var(--color-text) !important;
+  padding-left: 18px;
+  border-left: 3px solid var(--color-accent);
+}
+.about-people {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.about-people li {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  align-items: center;
+  padding: 16px;
+  background: #e9e6df;
+  border-radius: 10px;
+}
+.about-people li span {
+  grid-row: span 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--color-ink);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.about-people b {
+  font-size: 17px;
+  color: var(--color-text);
+  align-self: end;
+}
+.about-people small {
+  color: var(--color-muted);
+  align-self: start;
+}
+.about-note {
+  font-size: 15px;
+}
+
+/* Residencies: dark band */
+.about-band {
+  margin: 0 -32px;
+  padding: 64px 32px;
+  background: var(--color-ink);
+  color: #fff;
+  border-radius: 16px;
+  scroll-margin-top: 16px;
+}
+.about-band-inner {
+  max-width: 1076px;
+  margin: 0 auto;
+}
+.about-band .eyebrow {
+  color: #ffffffb3;
+}
+.about-band h2 {
+  font-size: clamp(30px, 4vw, 46px);
+  margin: 14px 0 32px;
+  max-width: 640px;
+}
+.about-band ol {
+  list-style: none;
+  counter-reset: step;
+  padding: 0;
+  margin: 0 0 28px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.about-band li {
+  counter-increment: step;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 20px;
+  border: 1px solid #ffffff33;
+  border-radius: 10px;
+}
+.about-band li::before {
+  content: counter(step, decimal-leading-zero);
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+.about-band li b {
+  font-size: 17px;
+}
+.about-band li span {
+  color: #ffffffb3;
+  line-height: 1.5;
+}
+.about-band p {
+  color: #ffffffb3;
+  margin: 0;
+}
+
+/* Ways to visit: cards need the full width */
+.about-visit {
+  grid-template-columns: 1fr;
+  gap: 28px;
+  border-top: 0;
+  margin-top: 24px;
+}
+.about-card em {
+  white-space: nowrap;
+}
+.about-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.about-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  text-align: left;
+  padding: 22px;
+  border: 1px solid #dedbd2;
+  border-radius: 12px;
+  background: #f8f5ef;
+  color: var(--color-text);
+  font: inherit;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+.about-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+.about-card svg {
+  color: var(--color-accent-text);
+}
+.about-card b {
+  font-size: 18px;
+}
+.about-card span {
+  color: var(--color-muted);
+  line-height: 1.55;
+}
+.about-card em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-accent-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Closing cards */
+.about-closing {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 56px;
+  border-top: 1px solid #dedbd2;
+}
+.about-closing article {
+  padding: 24px;
+  background: #e9e6df;
+  border-radius: 12px;
+  scroll-margin-top: 16px;
+}
+.about-closing svg {
+  color: var(--color-accent-text);
+}
+.about-closing h2 {
+  font-size: 24px;
+  margin: 12px 0 8px;
+}
+.about-closing p {
+  margin: 0;
+  font-size: 15px;
+}
+
+@media (max-width: 900px) {
+  .about-hero,
+  .about-row,
+  .about-visit {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .about-band ol,
+  .about-cards,
+  .about-closing {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .about-strip {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 150px;
+  }
+}
+@media (max-width: 600px) {
+  .about {
+    padding: 40px 18px 72px;
+  }
+  .about-hero p {
+    font-size: 18px;
+  }
+  .about-strip {
+    grid-auto-rows: 110px;
+    margin: 36px 0 8px;
+  }
+  .about-row,
+  .about-visit {
+    padding: 40px 0;
+  }
+  .about-quote {
+    font-size: 20px;
+  }
+  .about-people,
+  .about-band ol,
+  .about-cards,
+  .about-closing {
+    grid-template-columns: 1fr;
+  }
+  .about-band {
+    margin: 0 -18px;
+    padding: 48px 18px;
+    border-radius: 0;
+  }
+}

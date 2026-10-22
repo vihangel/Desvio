@@ -59,7 +59,10 @@ export default function App() {
       <Header go={navigate} current={page} />
       {page === "about" && (
         <AboutPage
-          onVisit={() => navigate("visit")}
+          onVisit={(guidedVisit = false) => {
+            setGuided(guidedVisit);
+            navigate("visit");
+          }}
           onCollection={() => navigate("catalog")}
         />
       )}
