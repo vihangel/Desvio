@@ -73,9 +73,8 @@ export default function AboutPage({
           </p>
           <p>
             Mais do que copiar salas físicas, o Desvio quer permitir contemplar
-            obras em 2D, experienciar objetos 3D e acessar narrativas
-            contextualizadas, com liberdade para visitas não lineares. A
-            tecnologia é meio de mediação, não um fim em si.
+            obras em 2D, experienciar objetos 3D e acessar narrativas de forma
+            mais acessível a todos.
           </p>
         </div>
       </section>
@@ -88,7 +87,7 @@ export default function AboutPage({
           <p>
             Para guardar memória, fazer circular e abrir espaço para
             experimentação e preservação de produções que costumam ficar fora
-            dos circuitos tradicionais, sem reduzir trajetórias a sofrimento.
+            dos circuitos tradicionais.
           </p>
         </div>
       </section>
@@ -110,10 +109,6 @@ export default function AboutPage({
               <small>Codireção e desenvolvimento</small>
             </li>
           </ul>
-          <p className="about-note">
-            Pessoas curadoras e residentes são apresentadas aqui depois que a
-            participação de cada uma é confirmada.
-          </p>
         </div>
       </section>
 
@@ -200,7 +195,7 @@ export default function AboutPage({
           <p>
             O Desvio está em construção. Nesta etapa, não há financiamento e o
             trabalho é voluntário. Eventuais editais futuros serão comunicados
-            aqui, sem promessas antecipadas.
+            aqui.
           </p>
         </article>
       </section>

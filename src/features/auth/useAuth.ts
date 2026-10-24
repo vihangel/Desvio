@@ -1,4 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+const OFFLINE =
+  "Não foi possível falar com o servidor. Verifique a conexão e tente de novo.";
+// Browsers report a dropped connection as a bare "Failed to fetch".
+const friendly = (error: unknown) =>
+  error instanceof TypeError || /fetch|network|load failed/i.test(String(error))
+    ? OFFLINE
+    : error instanceof Error
+      ? error.message
+      : "Falha ao conferir acesso.";
 import type { AuthIdentity, AuthService } from "../../domain/auth";
 export function useAuth(service: AuthService | undefined) {
   const [state, setState] = useState({
@@ -10,6 +19,7 @@ export function useAuth(service: AuthService | undefined) {
     loading: !!service,
     error: "",
   });
+  const retry = useRef<() => void>(() => {});
   useEffect(() => {
     if (!service) return;
     let active = true;
@@ -33,30 +43,25 @@ export function useAuth(service: AuthService | undefined) {
               : { ...s, ...next, loading: false, error: "" },
           );
       } catch (error) {
+        // A failed check (often a dropped connection) keeps whoever was
+        // signed in; the next successful check settles the identity.
         if (active && token === request)
-          setState((s) => ({
-            ...s,
-            userId: "",
-            email: "",
-            editor: false,
-            role: null,
-            artistId: null,
-            loading: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Falha ao conferir acesso.",
-          }));
+          setState((s) => ({ ...s, loading: false, error: friendly(error) }));
       }
     };
+    retry.current = () => void refresh();
     void refresh();
     const unsubscribe = service.subscribe((event) => {
       if (event !== "refreshed") void refresh();
     });
+    // Check again as soon as the connection comes back.
+    const online = () => void refresh();
+    window.addEventListener("online", online);
     return () => {
       active = false;
       unsubscribe();
+      window.removeEventListener("online", online);
     };
   }, [service]);
-  return state;
+  return { ...state, retry: () => retry.current() };
 }

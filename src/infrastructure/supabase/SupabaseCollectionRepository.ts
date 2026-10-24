@@ -64,7 +64,12 @@ export class SupabaseCollectionRepository implements CollectionRepository {
   }
   async load() {
     const { data, error } = await this.client().rpc("desvio_load_collection");
-    if (error) throw new Error(`Falha ao carregar Supabase: ${error.message}`);
+    if (error)
+      throw new Error(
+        /fetch|network|load failed/i.test(error.message)
+          ? "Não foi possível carregar o acervo. Verifique a conexão e tente de novo."
+          : `Falha ao carregar o acervo: ${error.message}`,
+      );
     return this.hydrate(data);
   }
   private async command(operation: string, payload: unknown, revision: number) {

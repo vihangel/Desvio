@@ -75,10 +75,14 @@ export default function App() {
         </div>
       )}
 
-      {auth.error && (
-        <p role="alert" className="admin">
-          {auth.error}
-        </p>
+      {/* Visitors never sign in, so access errors only matter in the admin. */}
+      {auth.error && (page === "admin" || page === "reset_password") && (
+        <div role="alert" className="connection-alert">
+          <span>{auth.error}</span>
+          <button className="outline" onClick={auth.retry}>
+            Tentar de novo
+          </button>
+        </div>
       )}
       {previewError && (
         <p className="local-preview-link" role="alert">
