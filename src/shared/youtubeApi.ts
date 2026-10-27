@@ -4,6 +4,7 @@ export interface YoutubePlayer {
   mute(): void;
   unMute(): void;
   destroy(): void;
+  getIframe(): HTMLIFrameElement;
 }
 interface YoutubeOptions {
   videoId: string;

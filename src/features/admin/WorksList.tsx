@@ -82,7 +82,7 @@ export default function WorksList({
     <section className="list-page">
       <div className="list-header">
         <div>
-          <h2>{artist ? "Obras das suas salas" : "Obras"}</h2>
+          <h1>{artist ? "Obras das suas salas" : "Obras"}</h1>
           <p className="section-description">
             {artist
               ? "Toque em uma obra para editar. Obras novas ou editadas vão para a curadoria antes de aparecer no site."

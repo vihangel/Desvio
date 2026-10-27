@@ -1,5 +1,5 @@
 import { presentationFor } from "../domain/slots";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -13,8 +13,13 @@ export default function Sculpture({
   onClick: () => void;
 }) {
   const sculpture = useRef<THREE.Mesh>(null);
+  // Honour the system's "reduce motion" setting.
+  const still = useMemo(
+    () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+    [],
+  );
   useFrame((_, d) => {
-    if (sculpture.current) sculpture.current.rotation.y += d * 0.15;
+    if (sculpture.current && !still) sculpture.current.rotation.y += d * 0.15;
   });
   const onPedestal = presentationFor(art.placement, art.type) === "pedestal";
   const base = onPedestal ? 1.04 : 0;

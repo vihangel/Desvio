@@ -49,6 +49,8 @@ export function validateRecord(
     throw new Error("Informe um link válido de vídeo do YouTube.");
   if (media.narration?.src && !safeSource(media.narration.src, true))
     throw new Error("Endereço de áudio inválido.");
+  if (media.narration?.captions !== undefined)
+    validateCaptions(media.narration.captions);
   if (media.type === "image" && !media.src && !media.path)
     throw new Error("Selecione uma imagem.");
   if (
@@ -220,4 +222,14 @@ export function assertArtistUnused(
         .map((r) => r.name)
         .join(", ")}.`,
     );
+}
+export const CAPTIONS_LIMIT = 200_000;
+// Minimal WebVTT check: header, size and at least one timed cue.
+export function validateCaptions(text: string): void {
+  if (text.length > CAPTIONS_LIMIT)
+    throw new Error("Arquivo de legenda acima de 200 KB.");
+  if (!/^\uFEFF?WEBVTT/.test(text))
+    throw new Error("A legenda precisa ser um arquivo WebVTT (.vtt).");
+  if (!/\d{2}:\d{2}(?::\d{2})?\.\d{3}\s+-->\s+/.test(text))
+    throw new Error("A legenda não tem nenhum trecho com tempo.");
 }

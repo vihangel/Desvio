@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { focusPageHeading } from "../../shared/pageFocus";
 export type AdminSection = "works" | "artists" | "rooms" | "preview";
 // `id` is "nova" for a new item, an id to edit, or undefined for the list.
 export interface AdminRoute {
@@ -56,6 +57,7 @@ export function useAdminRoute(canLeave: () => Promise<boolean>) {
       const url = new URL(path, location.origin);
       setRoute(parseAdminPath(url.pathname, url.search));
       window.scrollTo(0, 0);
+      focusPageHeading();
       return true;
     },
     [],

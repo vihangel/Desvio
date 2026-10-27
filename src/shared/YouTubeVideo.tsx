@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { youtubeId } from "../domain/youtube";
 import { mediaPlayback } from "./mediaPlayback";
 import { loadYoutubeApi, type YoutubePlayer } from "./youtubeApi";
+import { usePreferences } from "./preferences";
 export default function YouTubeVideo({
   url,
   title,
@@ -10,7 +11,8 @@ export default function YouTubeVideo({
 }: {
   url: string;
   title: string;
-  // Scene preview: plays while the visitor faces the screen.
+  // Scene preview: plays while the visitor faces the screen, with sound only
+  // if the visitor turned it on (videos in the 3D museum start muted).
   active?: boolean;
   // Dialog: starts with sound right after the visitor opened it.
   autoplay?: boolean;
@@ -18,6 +20,7 @@ export default function YouTubeVideo({
   const host = useRef<HTMLDivElement>(null);
   const player = useRef<YoutubePlayer | undefined>(undefined);
   const autoplayRef = useRef(autoplay);
+  const { sound } = usePreferences();
   const token = useRef(crypto.randomUUID()).current;
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -53,10 +56,15 @@ export default function YouTubeVideo({
             controls: 1,
             autoplay: 0,
             rel: 0,
+            // Captions on by default, in Portuguese when available.
+            cc_load_policy: 1,
+            cc_lang_pref: "pt",
+            hl: "pt-BR",
           },
           events: {
             onReady: (e) => {
               if (!mounted) return;
+              e.target.getIframe?.().setAttribute("title", `Vídeo: ${title}`);
               if (autoplayRef.current) {
                 mediaPlayback.claim(token);
                 e.target.unMute();
@@ -106,7 +114,7 @@ export default function YouTubeVideo({
       player.current = undefined;
       node.remove();
     };
-  }, [videoId, token]);
+  }, [videoId, token, title]);
   useEffect(() => {
     if (!ready || active === undefined || document.hidden) return;
     if (!active) {
@@ -114,13 +122,14 @@ export default function YouTubeVideo({
       mediaPlayback.release(token);
       setManualPause(false);
     } else if (!manualPause && (owner === null || owner === token)) {
-      player.current?.unMute();
-      setMuted(false);
+      if (sound) player.current?.unMute();
+      else player.current?.mute();
+      setMuted(!sound);
       player.current?.playVideo();
     }
-  }, [active, ready, owner, manualPause, token]);
+  }, [active, ready, owner, manualPause, token, sound]);
   return (
-    <div className="video-player" aria-label={title}>
+    <div className="video-player" role="group" aria-label={`Vídeo: ${title}`}>
       <div ref={host} className="youtube-host" />
       {error && <p role="status">{error}</p>}
       <div className="media-controls">
@@ -154,6 +163,7 @@ export default function YouTubeVideo({
         </button>
         <a href={url} target="_blank" rel="noopener noreferrer">
           Abrir no YouTube
+          <span className="sr-only"> (abre em nova aba)</span>
         </a>
       </div>
     </div>

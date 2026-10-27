@@ -118,6 +118,7 @@ export default function LocalPreviewPage({
                     rel="noopener noreferrer"
                   >
                     Catálogo de origem ↗
+                    <span className="sr-only"> (abre em nova aba)</span>
                   </a>
                 </div>
               </article>

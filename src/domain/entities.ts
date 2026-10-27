@@ -54,6 +54,8 @@ export interface ArtistAudio {
   credits: string;
   transcript: string;
   authorized: boolean;
+  // WebVTT text shown in sync with the audio (stored inline, small).
+  captions?: string;
 }
 export interface MediaAsset {
   modelFormat?: ModelFormat;

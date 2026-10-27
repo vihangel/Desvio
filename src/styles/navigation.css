@@ -96,7 +96,7 @@ header nav {
   margin: 0;
   padding: 0;
 }
-nav button[aria-current="page"] {
+nav a[aria-current="page"] {
   color: var(--color-accent-text);
   font-weight: 600;
 }
@@ -111,6 +111,7 @@ nav button[aria-current="page"] {
   .nav-visit,
   .nav-toggle {
     display: inline-flex;
+    text-decoration: none;
     min-height: 40px;
     align-items: center;
     padding: 0 10px;
@@ -136,7 +137,10 @@ nav button[aria-current="page"] {
   .nav-items.open {
     display: flex;
   }
-  .nav-items button {
+  .nav-items a {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
     width: 100%;
     min-height: 52px;
     padding: 0 20px;

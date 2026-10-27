@@ -39,6 +39,7 @@ header {
   z-index: 9;
 }
 .brand {
+  text-decoration: none;
   display: flex;
   gap: 10px;
   align-items: center;
@@ -63,7 +64,8 @@ nav {
   display: flex;
   gap: 30px;
 }
-nav button {
+nav button,
+nav a {
   background: transparent;
   border: 0;
   color: var(--color-text);

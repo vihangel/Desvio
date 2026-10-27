@@ -74,3 +74,92 @@
   border-color: var(--color-border);
   background: transparent;
 }
+
+/* The scene fills the viewer; overlays sit on top of it. */
+.viewer-scene {
+  position: absolute;
+  inset: 0;
+}
+.help {
+  margin: 0;
+}
+/* Sound and "works in this room": always reachable, above the guide button. */
+.viewer-tools {
+  position: absolute;
+  right: 25px;
+  bottom: 84px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: min(360px, calc(100% - 50px));
+}
+.sound-toggle,
+.room-works > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: #f8f5eef2;
+  color: var(--color-text);
+  font-weight: 600;
+}
+.sound-toggle[aria-pressed="true"] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+}
+.room-works {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 8px;
+}
+.room-works ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  width: min(360px, calc(100vw - 50px));
+  max-height: 45vh;
+  overflow: auto;
+  background: #f8f5ee;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px #0002;
+}
+.room-works li > button {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+}
+.room-works li > button:hover {
+  background: #ebe6dc;
+}
+.room-works li > button small {
+  color: var(--color-muted);
+}
+.room-works li:not(:has(button)) {
+  padding: 10px 12px;
+  color: var(--color-muted);
+}
+@media (max-width: 700px) {
+  .viewer-tools {
+    right: 14px;
+    bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+  /* Keyboard hints do not apply to touch; the joystick explains itself. */
+  .help {
+    display: none;
+  }
+}

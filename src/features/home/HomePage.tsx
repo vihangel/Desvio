@@ -77,6 +77,7 @@ export default function HomePage({
             <p>{a.bio}</p>
             <a href={a.source} target="_blank" rel="noopener noreferrer">
               Conhecer referência ↗
+              <span className="sr-only"> (abre em nova aba)</span>
             </a>
           </article>
         ))}

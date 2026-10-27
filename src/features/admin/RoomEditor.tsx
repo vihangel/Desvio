@@ -50,7 +50,7 @@ export function RoomsList({
     <section className="list-page">
       <div className="list-header">
         <div>
-          <h2>{curator ? "Salas" : "Suas salas"}</h2>
+          <h1>{curator ? "Salas" : "Suas salas"}</h1>
           <p className="section-description">
             {curator
               ? "A visita percorre as salas nesta ordem. Toque em uma sala para editar nome, texto, capacidade e artistas."

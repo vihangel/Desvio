@@ -1,0 +1,352 @@
+/* Accessibility: skip link, preferences panel and the visitor's preferences
+   (text size, high contrast, easy reading) plus the system's reduced motion. */
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 100;
+  padding: 12px 18px;
+  border-radius: 6px;
+  background: var(--color-ink);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: 12px;
+}
+/* Programmatic focus targets (content start, page headings). */
+#conteudo:focus,
+#conteudo h1:focus {
+  outline: none;
+}
+nav a {
+  text-decoration: none;
+}
+
+/* Header button and panel */
+header {
+  gap: 12px;
+}
+.a11y-button {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-ink);
+}
+.a11y-button:hover {
+  border-color: var(--color-ink);
+}
+.a11y-panel {
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  background: #f8f5ee;
+  border-radius: 12px;
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+  color: var(--color-text);
+}
+.a11y-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.a11y-panel h2 {
+  margin: 0;
+  font:
+    normal 26px Georgia,
+    serif;
+}
+.a11y-panel .dismiss {
+  position: static;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+.a11y-sizes {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.a11y-sizes legend {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.a11y-sizes div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.a11y-sizes label {
+  position: relative;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.a11y-sizes label:nth-child(2) {
+  font-size: 1.15em;
+}
+.a11y-sizes label:nth-child(3) {
+  font-size: 1.3em;
+}
+.a11y-sizes label.selected {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+}
+.a11y-sizes input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.a11y-sizes label:focus-within,
+.a11y-toggle:focus-within {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 2px;
+}
+.a11y-toggle {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.a11y-toggle input {
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  flex-shrink: 0;
+  accent-color: var(--color-ink);
+}
+.a11y-toggle span {
+  display: grid;
+  gap: 4px;
+}
+.a11y-toggle small {
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+/* Text size: scales the page content like browser zoom, so pixel-based
+   layouts grow together. The 3D viewer keeps its size. */
+:root[data-text-size="large"] #conteudo main:not(.viewer),
+:root[data-text-size="large"] :is(.modal, .confirm-dialog, .a11y-panel) {
+  zoom: 1.2;
+}
+:root[data-text-size="xlarge"] #conteudo main:not(.viewer),
+:root[data-text-size="xlarge"] :is(.modal, .confirm-dialog, .a11y-panel) {
+  zoom: 1.4;
+}
+:root[data-text-size="large"]
+  .viewer
+  :is(
+    .scene-title,
+    .room-picker,
+    .help,
+    .guide-toggle,
+    .tour,
+    .video-watch-action,
+    .sound-toggle,
+    .room-works
+  ) {
+  zoom: 1.15;
+}
+:root[data-text-size="xlarge"]
+  .viewer
+  :is(
+    .scene-title,
+    .room-picker,
+    .help,
+    .guide-toggle,
+    .tour,
+    .video-watch-action,
+    .sound-toggle,
+    .room-works
+  ) {
+  zoom: 1.3;
+}
+
+/* High contrast */
+:root[data-contrast="high"] {
+  --color-background: #fff;
+  --color-ink: #000;
+  --color-text: #000;
+  --color-muted: #1f1f1f;
+  --color-border: #000;
+  --color-accent: #b00000;
+  --color-accent-text: #9b0000;
+  --color-accent-soft: #fff;
+}
+:root[data-contrast="high"] :is(body, header, .admin-nav, .form-actions) {
+  background: #fff;
+}
+:root[data-contrast="high"]
+  :is(
+    .feature,
+    .artist-grid article,
+    .public-work-card,
+    .about-people li,
+    .about-closing article,
+    .about-card,
+    .form-section,
+    .item-card,
+    .upload-box,
+    .editor-feedback,
+    .admin-preview-banner,
+    .modal,
+    .a11y-panel,
+    .a11y-toggle,
+    .confirm-dialog,
+    .tour,
+    .room-picker button,
+    .scene-title,
+    .help,
+    .video-watch-action,
+    .sound-toggle,
+    .room-works,
+    .callout,
+    .chip,
+    .status-pill
+  ) {
+  background: #fff !important;
+  color: #000 !important;
+  border: 2px solid #000 !important;
+}
+:root[data-contrast="high"] :is(p, small, span, dd, li) {
+  color: inherit;
+}
+:root[data-contrast="high"] .about-band {
+  background: #000;
+}
+:root[data-contrast="high"] .about-band :is(p, span, .eyebrow) {
+  color: #fff !important;
+}
+:root[data-contrast="high"]
+  :is(
+    .primary,
+    .chip.active,
+    .segmented label.selected,
+    .a11y-sizes label.selected
+  ) {
+  background: #000 !important;
+  color: #fff !important;
+}
+:root[data-contrast="high"] a:not(.primary, .skip-link) {
+  text-decoration: underline;
+}
+:root[data-contrast="high"] :focus-visible {
+  outline: 3px solid #000 !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px #ffd400;
+}
+
+/* Easy reading: WCAG 1.4.12 text spacing and underlined links. */
+:root[data-reading="easy"] body {
+  letter-spacing: 0.05em;
+  word-spacing: 0.16em;
+}
+:root[data-reading="easy"] :is(p, li, dd, small, label) {
+  line-height: 1.9 !important;
+}
+:root[data-reading="easy"] p {
+  margin-bottom: 1.6em;
+}
+:root[data-reading="easy"] a:not(.primary, .skip-link, .brand) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* System setting: reduce motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 700px) {
+  header {
+    gap: 6px;
+  }
+  .a11y-button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Narration: captions and transcript */
+.artist-narration {
+  display: grid;
+  gap: 10px;
+}
+.captions-toggle {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+}
+.captions-toggle[aria-pressed="true"] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+}
+.narration-caption {
+  min-height: 3em;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  font-size: 1.05em;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.narration-transcript h4 {
+  margin: 6px 0 4px;
+  font-size: 14px;
+}
+.narration-transcript p {
+  margin: 0;
+  line-height: 1.7;
+}

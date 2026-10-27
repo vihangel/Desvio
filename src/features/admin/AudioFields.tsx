@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { RecordDraft } from "../../domain/entities";
+import { CAPTIONS_LIMIT, validateCaptions } from "../../domain/validation";
 import { Field } from "./ui";
 export default function AudioFields({
   draft,
@@ -12,6 +14,7 @@ export default function AudioFields({
   remote: boolean;
 }) {
   const audio = draft.media.narration;
+  const [captionsError, setCaptionsError] = useState("");
   const update = (patch: Partial<NonNullable<typeof audio>>) =>
     onChange({
       ...draft,
@@ -90,6 +93,57 @@ export default function AudioFields({
               onChange={(e) => update({ transcript: e.target.value })}
             />
           </Field>
+          <div className="upload-box">
+            <span className="field-label">Legenda sincronizada (opcional)</span>
+            <p className={audio.captions ? "file-status ok" : "file-status"}>
+              {audio.captions
+                ? `✓ Legenda anexada (${audio.captions.split("-->").length - 1} trechos).`
+                : "Nenhuma legenda anexada."}
+            </p>
+            <label className="file-button">
+              {audio.captions ? "Trocar legenda" : "Escolher arquivo .vtt"}
+              <input
+                type="file"
+                accept=".vtt,text/vtt"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file) return;
+                  try {
+                    if (file.size > CAPTIONS_LIMIT)
+                      throw new Error("Arquivo de legenda acima de 200 KB.");
+                    const text = await file.text();
+                    validateCaptions(text);
+                    setCaptionsError("");
+                    update({ captions: text });
+                  } catch (error) {
+                    setCaptionsError(
+                      error instanceof Error
+                        ? error.message
+                        : "Não foi possível ler a legenda.",
+                    );
+                  }
+                }}
+              />
+            </label>
+            {captionsError && (
+              <p className="file-status missing" role="alert">
+                {captionsError}
+              </p>
+            )}
+            {audio.captions && (
+              <button
+                className="link-button danger-link"
+                onClick={() => update({ captions: undefined })}
+              >
+                Remover legenda
+              </button>
+            )}
+            <small className="field-hint">
+              Arquivo WebVTT com o texto e os tempos de cada fala. Aparece
+              durante o áudio; quem usa leitor de tela recebe a transcrição.
+            </small>
+          </div>
           <label className="checkbox-field">
             <input
               type="checkbox"

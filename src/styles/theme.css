@@ -30,6 +30,7 @@ textarea:focus-visible {
   outline-offset: 3px;
 }
 nav button:hover,
+nav a:hover,
 .outline:hover,
 .artist-work-link:hover {
   color: var(--color-accent-text);

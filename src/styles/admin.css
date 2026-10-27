@@ -100,6 +100,7 @@
   justify-content: space-between;
   gap: 16px;
 }
+.list-header h1,
 .list-header h2,
 .form-page-title h1 {
   margin: 0;
@@ -711,6 +712,7 @@
   .list-header .primary {
     width: 100%;
   }
+  .list-header h1,
   .list-header h2,
   .form-page-title h1 {
     font-size: 26px;

@@ -49,7 +49,7 @@ export function ArtistsList({
     <section className="list-page">
       <div className="list-header">
         <div>
-          <h2>Pessoas artistas</h2>
+          <h1>Pessoas artistas</h1>
           <p className="section-description">
             Perfis exibidos na página Artistas. Toque para editar, trocar a foto
             ou convidar a pessoa para cuidar das próprias salas.

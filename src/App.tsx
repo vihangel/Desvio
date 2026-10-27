@@ -2,7 +2,14 @@ import { useAuth } from "./features/auth/useAuth";
 import AdminLogin from "./features/auth/AdminLogin";
 import ResetPassword from "./features/auth/ResetPassword";
 import { useDemoMontage } from "./app/useDemoMontage";
-import { lazy, Suspense, useCallback, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { usePageA11y } from "./app/usePageA11y";
+import {
+  applyPreferences,
+  preferences,
+  usePreferences,
+} from "./shared/preferences";
+import VLibras from "./shared/VLibras";
 import type { Artwork } from "./domain/entities";
 import { selectArtworks } from "./domain/selectors";
 import { useNavigation } from "./app/useNavigation";
@@ -31,6 +38,14 @@ const LocalPreviewPage = import.meta.env.DEV
 const AdminPage = lazy(() => import("./features/admin/AdminPage"));
 export default function App() {
   const { page, go } = useNavigation();
+  usePageA11y(page);
+  const prefs = usePreferences();
+  useEffect(() => applyPreferences(prefs), [prefs]);
+  const [librasError, setLibrasError] = useState("");
+  const librasFailed = useCallback((message: string) => {
+    setLibrasError(message);
+    preferences.set({ libras: false });
+  }, []);
   const auth = useAuth(authService);
   const artistId =
     auth.role === "artist" && !auth.editor ? auth.artistId : null;
@@ -56,167 +71,189 @@ export default function App() {
       : [];
   return (
     <div className="app">
+      <a className="skip-link" href="#conteudo">
+        Pular para o conteúdo
+      </a>
       <Header go={navigate} current={page} />
-      {page === "about" && (
-        <AboutPage
-          onVisit={(guidedVisit = false) => {
-            setGuided(guidedVisit);
-            navigate("visit");
-          }}
-          onCollection={() => navigate("catalog")}
-        />
-      )}
-      {dataMode === "demo" && import.meta.env.DEV && page === "home" && (
-        <div className="local-preview-link">
-          <span>Obras de Linscker disponíveis para montagem local.</span>
-          <button onClick={() => navigate("preview")}>
-            Abrir prévia das obras →
-          </button>
-        </div>
-      )}
-
-      {/* Visitors never sign in, so access errors only matter in the admin. */}
-      {auth.error && (page === "admin" || page === "reset_password") && (
+      <VLibras enabled={prefs.libras} onError={librasFailed} />
+      {librasError && (
         <div role="alert" className="connection-alert">
-          <span>{auth.error}</span>
-          <button className="outline" onClick={auth.retry}>
-            Tentar de novo
+          <span>{librasError}</span>
+          <button className="outline" onClick={() => setLibrasError("")}>
+            Fechar
           </button>
         </div>
       )}
-      {previewError && (
-        <p className="local-preview-link" role="alert">
-          {previewError}
-        </p>
-      )}
-      {loading && page !== "about" && (
-        <main className="admin" role="status">
-          Carregando acervo…
-        </main>
-      )}
-      {error && page !== "about" && (
-        <main className="admin">
-          <p role="alert">{error}</p>
-          <button onClick={() => void reload()}>Tentar novamente</button>
-          {dataMode === "demo" && (
-            <button onClick={() => void recover()}>
-              Restaurar demonstração local
+      <div id="conteudo" tabIndex={-1}>
+        {page === "about" && (
+          <AboutPage
+            onVisit={(guidedVisit = false) => {
+              setGuided(guidedVisit);
+              navigate("visit");
+            }}
+            onCollection={() => navigate("catalog")}
+          />
+        )}
+        {dataMode === "demo" && import.meta.env.DEV && page === "home" && (
+          <aside className="local-preview-link" aria-label="Prévia local">
+            <span>Obras de Linscker disponíveis para montagem local.</span>
+            <button onClick={() => navigate("preview")}>
+              Abrir prévia das obras →
             </button>
-          )}
-        </main>
-      )}
-      {!loading && !error && state && snapshot && (
-        <>
-          {page === "home" && (
-            <HomePage
-              snapshot={
-                snapshot.exhibition.status === "published"
-                  ? snapshot
-                  : { ...snapshot, records: [], placements: [] }
-              }
-              onVisit={(value) => {
-                setGuided(value);
-                navigate("visit");
-              }}
-            />
-          )}
-          {page === "catalog" && (
-            <CatalogPage works={works} onSelect={setSelected} />
-          )}
-          {page === "artists" && (
-            <ArtistsPage
-              artists={snapshot.artists}
-              works={works}
-              onSelect={setSelected}
-            />
-          )}
-          {page === "visit" && (
-            <VisitPage
-              works={works}
-              rooms={snapshot.rooms}
-              onSelect={setSelected}
-              disabled={!!selected}
-              initialGuided={guided}
-            />
-          )}
-          {page === "preview" && LocalPreviewPage && (
-            <Suspense
-              fallback={<main className="admin">Carregando prévia…</main>}
-            >
-              <LocalPreviewPage
-                base={state.published}
-                loadPreview={loadLinsckerPreview}
+          </aside>
+        )}
+
+        {/* Visitors never sign in, so access errors only matter in the admin. */}
+        {auth.error && (page === "admin" || page === "reset_password") && (
+          <div role="alert" className="connection-alert">
+            <span>{auth.error}</span>
+            <button className="outline" onClick={auth.retry}>
+              Tentar de novo
+            </button>
+          </div>
+        )}
+        {previewError && (
+          <p className="local-preview-link" role="alert">
+            {previewError}
+          </p>
+        )}
+        {loading && page !== "about" && (
+          <main className="admin" role="status">
+            Carregando acervo…
+          </main>
+        )}
+        {error && page !== "about" && (
+          <main className="admin">
+            <p role="alert">{error}</p>
+            <button onClick={() => void reload()}>Tentar novamente</button>
+            {dataMode === "demo" && (
+              <button onClick={() => void recover()}>
+                Restaurar demonstração local
+              </button>
+            )}
+          </main>
+        )}
+        {!loading && !error && state && snapshot && (
+          <>
+            {page === "home" && (
+              <HomePage
+                snapshot={
+                  snapshot.exhibition.status === "published"
+                    ? snapshot
+                    : { ...snapshot, records: [], placements: [] }
+                }
+                onVisit={(value) => {
+                  setGuided(value);
+                  navigate("visit");
+                }}
               />
-            </Suspense>
-          )}
-          {page === "reset_password" && authService && (
-            <ResetPassword
-              service={authService}
-              signedIn={!!auth.userId}
-              loading={auth.loading}
-              onDone={() => navigate("admin")}
-              onLogin={() => navigate("admin")}
-            />
-          )}
-          {page === "admin" &&
-            dataMode === "supabase" &&
-            !auth.editor &&
-            !artistId &&
-            authService &&
-            (auth.loading ? (
-              <p role="status">Conferindo acesso…</p>
-            ) : (
-              <AdminLogin
-                service={authService}
-                signedIn={!!auth.userId}
-                accountEmail={auth.email}
-                onExit={() => navigate("home")}
+            )}
+            {page === "catalog" && (
+              <CatalogPage works={works} onSelect={setSelected} />
+            )}
+            {page === "artists" && (
+              <ArtistsPage
+                artists={snapshot.artists}
+                works={works}
+                onSelect={setSelected}
               />
-            ))}
-          {page === "admin" &&
-            (dataMode === "demo" ||
-              (!auth.loading && (auth.editor || !!artistId))) && (
+            )}
+            {page === "visit" && (
+              <VisitPage
+                works={works}
+                rooms={snapshot.rooms}
+                onSelect={setSelected}
+                disabled={!!selected}
+                initialGuided={guided}
+              />
+            )}
+            {page === "preview" && LocalPreviewPage && (
               <Suspense
-                fallback={<main className="admin">Carregando editor…</main>}
+                fallback={<main className="admin">Carregando prévia…</main>}
               >
-                <AdminPage
-                  loadLocalDraft={
-                    hasLocalDraft() ? loadLocalDraftForMigration : undefined
-                  }
-                  state={state}
-                  repository={repository}
-                  access={
-                    artistId
-                      ? { kind: "artist", artistId }
-                      : { kind: "curator" }
-                  }
-                  accounts={auth.editor ? artistAccounts : undefined}
-                  mediaService={mediaService}
-                  onChange={setState}
-                  onExit={() => navigate("home")}
-                  accountEmail={auth.email}
-                  onChangePassword={
-                    authService ? () => navigate("reset_password") : undefined
-                  }
-                  onSignOut={
-                    authService
-                      ? () => {
-                          void authService?.signOut();
-                          navigate("home");
-                        }
-                      : undefined
-                  }
+                <LocalPreviewPage
+                  base={state.published}
+                  loadPreview={loadLinsckerPreview}
                 />
               </Suspense>
             )}
-          {page === "not_found" && (
-            <main className="admin">
-              <h1>Página não encontrada</h1>
-              <button onClick={() => navigate("home")}>Voltar ao museu</button>
-            </main>
-          )}
-        </>
-      )}
+            {page === "reset_password" && authService && (
+              <ResetPassword
+                service={authService}
+                signedIn={!!auth.userId}
+                loading={auth.loading}
+                onDone={() => navigate("admin")}
+                onLogin={() => navigate("admin")}
+              />
+            )}
+            {page === "admin" &&
+              dataMode === "supabase" &&
+              !auth.editor &&
+              !artistId &&
+              authService &&
+              (auth.loading ? (
+                <p role="status">Conferindo acesso…</p>
+              ) : (
+                <AdminLogin
+                  service={authService}
+                  signedIn={!!auth.userId}
+                  accountEmail={auth.email}
+                  onExit={() => navigate("home")}
+                />
+              ))}
+            {page === "admin" &&
+              (dataMode === "demo" ||
+                (!auth.loading && (auth.editor || !!artistId))) && (
+                <Suspense
+                  fallback={<main className="admin">Carregando editor…</main>}
+                >
+                  <AdminPage
+                    loadLocalDraft={
+                      hasLocalDraft() ? loadLocalDraftForMigration : undefined
+                    }
+                    state={state}
+                    repository={repository}
+                    access={
+                      artistId
+                        ? { kind: "artist", artistId }
+                        : { kind: "curator" }
+                    }
+                    accounts={auth.editor ? artistAccounts : undefined}
+                    mediaService={mediaService}
+                    onChange={setState}
+                    onExit={() => navigate("home")}
+                    accountEmail={auth.email}
+                    onChangePassword={
+                      authService ? () => navigate("reset_password") : undefined
+                    }
+                    onSignOut={
+                      authService
+                        ? () => {
+                            void authService?.signOut();
+                            navigate("home");
+                          }
+                        : undefined
+                    }
+                  />
+                </Suspense>
+              )}
+            {page === "not_found" && (
+              <main className="admin">
+                <h1>Página não encontrada</h1>
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("home");
+                  }}
+                >
+                  Voltar ao início
+                </a>
+              </main>
+            )}
+          </>
+        )}
+      </div>
       {selected && (
         <ArtworkDialog key={selected.id} selected={selected} onClose={close} />
       )}

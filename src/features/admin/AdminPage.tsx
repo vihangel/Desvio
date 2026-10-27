@@ -516,7 +516,7 @@ function AdminShell({
             : "admin-shell"
       }
     >
-      <div className="admin-preview-banner">
+      <section className="admin-preview-banner" aria-label="Sessão">
         <b>
           {access.kind === "artist"
             ? `Área da artista${artistName ? ` · ${artistName}` : ""}`
@@ -562,7 +562,7 @@ function AdminShell({
           </button>
         )}
         {onSignOut && <button onClick={onSignOut}>Sair</button>}
-      </div>
+      </section>
       {!inForm && route.section !== "preview" && (
         <nav className="admin-nav" aria-label="Seções do admin">
           {tabs.map(([section, label]) => (

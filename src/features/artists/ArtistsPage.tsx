@@ -42,6 +42,7 @@ export default function ArtistsPage({
             {a.source && (
               <a href={a.source} target="_blank" rel="noopener noreferrer">
                 Fonte da trajetória ↗
+                <span className="sr-only"> (abre em nova aba)</span>
               </a>
             )}
           </article>

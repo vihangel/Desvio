@@ -66,6 +66,7 @@ export const snapshotSchema = z.object({
           credits: z.string(),
           transcript: z.string(),
           authorized: z.boolean(),
+          captions: z.string().optional(),
         })
         .optional(),
       src: z.string().optional(),
