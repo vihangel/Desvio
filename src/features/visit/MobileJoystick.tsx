@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { mobileInput } from "../../gallery/mobileControls";
 export default function MobileJoystick({ disabled }: { disabled: boolean }) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  // A short hint at the start of the visit; it would cover the scene otherwise.
+  const [hint, setHint] = useState(true);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setHint(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, []);
   useEffect(
     () => () => {
       mobileInput.forward = 0;
@@ -44,6 +50,7 @@ export default function MobileJoystick({ disabled }: { disabled: boolean }) {
         className="joystick"
         aria-label="Controle de movimentação"
         onPointerDown={(e) => {
+          setHint(false);
           e.currentTarget.setPointerCapture(e.pointerId);
           move(e);
         }}
@@ -60,7 +67,11 @@ export default function MobileJoystick({ disabled }: { disabled: boolean }) {
           }}
         />
       </div>
-      <span className="look-hint">Arraste à direita para olhar</span>
+      {hint && (
+        <span className="look-hint" aria-hidden="true">
+          Use o círculo para andar e arraste a tela para olhar
+        </span>
+      )}
     </div>
   );
 }

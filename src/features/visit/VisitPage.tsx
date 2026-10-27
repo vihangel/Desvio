@@ -68,27 +68,43 @@ export default function VisitPage({
         {activeRoom &&
           `Sala ${activeRoom.order + 1} de ${rooms.length}: ${activeRoom.name}. ${roomWorks.length} obra(s).`}
       </p>
-      {activeRoom && (
-        <div className="scene-title">
-          <small>
-            SALA {activeRoom.order + 1} DE {rooms.length}
-          </small>
-          <h2>{activeRoom.name}</h2>
-          <p>{activeRoom.subtitle}</p>
-        </div>
-      )}
-      <nav className="room-picker" aria-label="Salas">
-        {rooms.map((r) => (
-          <button
-            key={r.id}
-            className={room === r.order ? "active" : ""}
-            aria-current={room === r.order ? "location" : undefined}
-            onClick={() => jump(r.order)}
+      <div className="viewer-top">
+        {activeRoom && (
+          <div className="scene-title">
+            <small>
+              SALA {activeRoom.order + 1} DE {rooms.length}
+            </small>
+            <h2>{activeRoom.name}</h2>
+            <p>{activeRoom.subtitle}</p>
+          </div>
+        )}
+        <nav className="room-picker" aria-label="Salas">
+          {rooms.map((r) => (
+            <button
+              key={r.id}
+              className={room === r.order ? "active" : ""}
+              aria-current={room === r.order ? "location" : undefined}
+              onClick={() => jump(r.order)}
+            >
+              {r.order + 1} · {r.name}
+            </button>
+          ))}
+        </nav>
+        {/* Phones: one compact control instead of a stack of buttons. */}
+        <label className="room-select">
+          <span className="sr-only">Ir para a sala</span>
+          <select
+            value={activeRoom?.order ?? 0}
+            onChange={(e) => jump(Number(e.target.value))}
           >
-            {r.order + 1} · {r.name}
-          </button>
-        ))}
-      </nav>
+            {rooms.map((r) => (
+              <option key={r.id} value={r.order}>
+                Sala {r.order + 1} · {r.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <MobileJoystick disabled={disabled} />
       {focusedVideo && !disabled && (
         <div className="video-watch-action">
@@ -109,7 +125,9 @@ export default function VisitPage({
           ) : (
             <VolumeX size={18} aria-hidden="true" />
           )}
-          {sound ? "Som ligado" : "Som desligado"}
+          <span className="tool-label">
+            {sound ? "Som ligado" : "Som desligado"}
+          </span>
         </button>
         <div className="room-works">
           <button
@@ -118,7 +136,8 @@ export default function VisitPage({
             onClick={() => setListOpen(!listOpen)}
           >
             <List size={18} aria-hidden="true" />
-            Obras desta sala ({roomWorks.length})
+            <span className="tool-label">Obras desta sala</span>
+            <span className="tool-count">{roomWorks.length}</span>
           </button>
           {listOpen && (
             <ul id="room-works-list">
@@ -136,6 +155,19 @@ export default function VisitPage({
             </ul>
           )}
         </div>
+        <button
+          className="guide-toggle"
+          aria-pressed={guided}
+          onClick={() => {
+            setGuided(!guided);
+            if (!guided && current) jump(current.room);
+          }}
+        >
+          <Compass size={17} aria-hidden="true" />
+          <span className="tool-label">
+            {guided ? "Encerrar visita guiada" : "Iniciar visita guiada"}
+          </span>
+        </button>
       </div>
       <span className="crosshair" aria-hidden="true">
         +
@@ -144,17 +176,6 @@ export default function VisitPage({
         <Info size={15} aria-hidden="true" /> WASD ou setas para andar · Arraste
         para olhar · Clique nas obras ou use “Obras desta sala”
       </p>
-      <button
-        className="guide-toggle"
-        aria-pressed={guided}
-        onClick={() => {
-          setGuided(!guided);
-          if (!guided && current) jump(current.room);
-        }}
-      >
-        <Compass size={17} aria-hidden="true" />
-        {guided ? "Encerrar visita guiada" : "Iniciar visita guiada"}
-      </button>
       {guided &&
         (current ? (
           <aside className="tour" aria-label="Visita guiada">
