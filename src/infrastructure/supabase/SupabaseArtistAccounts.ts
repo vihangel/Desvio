@@ -11,12 +11,7 @@ export class SupabaseArtistAccounts implements ArtistAccountService {
     const { data, error } = await this.client().rpc(
       "desvio_list_artist_accounts",
     );
-    if (error)
-      throw new Error(
-        error.code === "PGRST202"
-          ? "Aplique a migration de contas de artista no Supabase."
-          : error.message,
-      );
+    if (error) throw new Error(error.message);
     return (data ?? []) as ArtistAccount[];
   }
   private async call(body: Record<string, unknown>, expectPassword = true) {

@@ -48,13 +48,21 @@ Ver [SUPABASE.md](SUPABASE.md) para modelo relacional, acesso, fluxo e critério
 
 ## Separação final
 
-`RecordEditor` coordena dados editoriais; `MediaFields` cuida do arquivo e seus direitos; `PlacementFields` cuida da montagem. `RoomEditor`, `ArtistEditor` e `ExhibitionEditor` têm ciclos de edição separados. `mounting` e `roomOperations` concentram operações puras e transacionais de organização.
+O admin (`features/admin`) é dividido assim:
+
+- `AdminPage`: casca da área (sessão, navegação, aviso de saída). Decide a tela pela URL.
+- `screens/`: uma tela por rota; liga listas e formulários às ações.
+- `works/`, `artists/`, `rooms/`: listas e formulários de cada assunto. `RecordEditor` coordena dados editoriais; `MediaFields` cuida do arquivo e seus direitos; `AudioFields`, da narração; `PlacementFields`, da montagem. `mounting` e `roomOperations` concentram operações puras e transacionais de organização.
+- `ui/`: peças sem regra de negócio: `FormPage`, `ListPage`, campos (`TextField`, `UrlField`, `SelectField`, `NumberField`, `YearField`), `UploadBox`, confirmação e avisos. Todo campo novo usa essas peças.
+- Hooks: `useAdminEditor` junta `useCollectionActions` (comandos, um por vez), `useRecordDraft` (a obra aberta), `useMediaUploads` (arquivos) e `useNotice`. `useFormDraft` guarda o rascunho dos formulários de artista, sala e exposição; `useArtistAccounts`, os acessos.
+
+`FormPage` é um `<form>` de verdade: Enter salva, e por isso todo outro botão dentro dele precisa de `type="button"` (`tests/forms.test.tsx` confere).
 
 `AuthService` e `MediaService` são portas do domínio; os componentes não importam Supabase nem adaptadores. O efeito da montagem demonstrativa foi retirado do App. Respostas de carregamentos antigos são descartadas após mudança de acesso.
 
 Enums fechados usam arrays `as const` e unions derivadas em `constants.ts`, reaproveitados por Zod. Isso evita enums numéricos e divergência entre validação e tipos.
 
-Os estilos foram divididos em folhas menores, com a ordem da cascata preservada pelo arquivo de entrada. Testes de arquitetura impedem dependências de persistência nos componentes.
+Os estilos foram divididos em folhas menores, com a ordem da cascata preservada pelo arquivo de entrada: `museum.css` reúne tudo do museu 3D e `admin-lists`, `admin-forms` e `admin-feedback` reúnem o admin. Testes de arquitetura impedem dependências de persistência nos componentes.
 
 ## Multimídia e foco
 

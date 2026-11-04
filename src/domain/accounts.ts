@@ -4,7 +4,6 @@ export interface ArtistAccount {
   userId: string;
   artistId: string;
   email: string;
-  confirmed: boolean;
   lastSignInAt: string | null;
 }
 // Shown once to the curator; never stored by the app.

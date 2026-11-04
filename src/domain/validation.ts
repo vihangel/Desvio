@@ -6,8 +6,9 @@ import {
   presentationFor,
   slotSupports,
 } from "./slots";
-import { ROOM_BOUNDS, SCALE_LIMITS } from "./constants";
-export function safeSource(value: string, allowLocal = false): boolean {
+import { ROOM_BOUNDS, SCALE_LIMITS, UPLOAD_LIMITS } from "./constants";
+import { isSessionUrl } from "./mediaUrls";
+function safeSource(value: string, allowLocal = false): boolean {
   if (
     allowLocal &&
     (/^\/(?!\/)/.test(value) ||
@@ -168,11 +169,11 @@ export function validateLiveRecord(
       !media.authorization?.trim())
   )
     throw new Error("Registre autorização e créditos da narração do artista.");
-  if (media.narration?.src?.startsWith("blob:"))
+  if (isSessionUrl(media.narration?.src))
     throw new Error(
       "Envie o áudio para armazenamento persistente antes de publicar.",
     );
-  if (media.src?.startsWith("blob:"))
+  if (isSessionUrl(media.src))
     throw new Error(
       "Envie o arquivo 3D para armazenamento persistente antes de publicar.",
     );
@@ -223,10 +224,9 @@ export function assertArtistUnused(
         .join(", ")}.`,
     );
 }
-export const CAPTIONS_LIMIT = 200_000;
 // Minimal WebVTT check: header, size and at least one timed cue.
 export function validateCaptions(text: string): void {
-  if (text.length > CAPTIONS_LIMIT)
+  if (text.length > UPLOAD_LIMITS.captions)
     throw new Error("Arquivo de legenda acima de 200 KB.");
   if (!/^\uFEFF?WEBVTT/.test(text))
     throw new Error("A legenda precisa ser um arquivo WebVTT (.vtt).");

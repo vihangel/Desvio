@@ -1,3 +1,4 @@
+import { isSessionUrl } from "../../domain/mediaUrls";
 import { swapMountings } from "../../domain/mounting";
 import {
   updateRoom,
@@ -109,8 +110,8 @@ export class LocalCollectionRepository implements CollectionRepository {
     const durable = structuredClone(state);
     for (const snapshot of [durable.draft, durable.published]) {
       snapshot.media.forEach((m) => {
-        if (m.src?.startsWith("blob:")) delete m.src;
-        if (m.narration?.src?.startsWith("blob:")) delete m.narration.src;
+        if (isSessionUrl(m.src)) delete m.src;
+        if (isSessionUrl(m.narration?.src)) delete m.narration!.src;
       });
     }
     try {

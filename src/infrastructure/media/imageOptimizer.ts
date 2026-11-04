@@ -1,3 +1,4 @@
+import { UPLOAD_LIMITS, megabytesLabel } from "../../domain/constants";
 import type { UploadSource } from "../../domain/media";
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 // Scales an image down in the browser and re-encodes it (WebP, else JPEG).
@@ -7,7 +8,10 @@ export async function optimizeImage(
 ): Promise<UploadSource> {
   if (!IMAGE_TYPES.includes(source.type))
     throw new Error("Selecione uma imagem PNG, JPEG ou WebP.");
-  if (source.size > 30_000_000) throw new Error("Imagem acima de 30 MB.");
+  if (source.size > UPLOAD_LIMITS.imageInput)
+    throw new Error(
+      `Imagem acima de ${megabytesLabel(UPLOAD_LIMITS.imageInput)}.`,
+    );
   const bitmap = await createImageBitmap(
     new Blob([await source.arrayBuffer()], { type: source.type }),
   );

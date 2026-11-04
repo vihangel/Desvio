@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 // Per-visitor accessibility preferences, kept in this browser only.
 export type TextSize = "normal" | "large" | "xlarge";
-export interface Preferences {
+interface Preferences {
   textSize: TextSize;
   highContrast: boolean;
   easyReading: boolean;

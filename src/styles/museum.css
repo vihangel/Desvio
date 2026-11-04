@@ -1,0 +1,484 @@
+/* The 3D museum: scene, overlays and on-screen controls. Comes last because
+   it has to win over the generic button and page rules. */
+.viewer {
+  height: calc(100vh - 76px);
+  position: relative;
+  background: #d6d0c7;
+}
+.viewer canvas {
+  display: block;
+}
+.scene-title {
+  position: absolute;
+  top: 24px;
+  left: 30px;
+  pointer-events: none;
+  color: var(--color-text);
+}
+.scene-title h2 {
+  font-family: Georgia, serif;
+  font-size: 36px;
+  font-weight: 400;
+  margin: 4px 0;
+}
+.scene-title p {
+  margin: 0;
+}
+.crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  color: var(--color-text);
+  font-size: 26px;
+}
+.help {
+  position: absolute;
+  bottom: 28px;
+  left: 25px;
+  background: #f9f5e9e6;
+  padding: 13px 18px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  margin: 0;
+}
+.guide-toggle {
+  position: absolute;
+  right: 25px;
+  bottom: 25px;
+  background: var(--color-ink);
+  border: 0;
+  color: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tour {
+  position: absolute;
+  top: 205px;
+  right: 25px;
+  width: 280px;
+  padding: 22px;
+  background: #f7f4eeec;
+  border-radius: 8px;
+}
+.tour h3 {
+  font-family: Georgia, serif;
+  font-size: 25px;
+}
+.tour .actions button {
+  padding: 8px;
+  border-color: var(--color-border);
+  background: transparent;
+}
+
+/* The scene fills the viewer; overlays sit on top of it. */
+.viewer-scene {
+  position: absolute;
+  inset: 0;
+}
+/* Sound and "works in this room": always reachable, above the guide button. */
+.viewer-tools {
+  position: absolute;
+  right: 25px;
+  bottom: 84px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: min(360px, calc(100% - 50px));
+}
+.sound-toggle,
+.room-works > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: #f8f5eef2;
+  color: var(--color-text);
+  font-weight: 600;
+}
+.sound-toggle[aria-pressed="true"] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+}
+.room-works {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 8px;
+}
+.room-works ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  width: min(360px, calc(100vw - 50px));
+  max-height: 45vh;
+  overflow: auto;
+  background: #f8f5ee;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px #0002;
+}
+.room-works li > button {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+}
+.room-works li > button:hover {
+  background: #ebe6dc;
+}
+.room-works li > button small {
+  color: var(--color-muted);
+}
+.room-works li:not(:has(button)) {
+  padding: 10px 12px;
+  color: var(--color-muted);
+}
+@media (max-width: 700px) {
+  .viewer-tools {
+    right: 14px;
+    bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+  /* Keyboard hints do not apply to touch; the joystick explains itself. */
+  .help {
+    display: none;
+  }
+}
+.room-picker {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.room-picker button {
+  background: #f8f5eced;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 10px 12px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 12px;
+}
+.room-picker button.active {
+  background: var(--color-ink);
+  color: #fff;
+}
+.scene-video-preview {
+  pointer-events: none;
+}
+.scene-video-preview .media-controls,
+.scene-video-preview [role="status"] {
+  display: none;
+}
+.video-watch-action {
+  position: absolute;
+  left: 50%;
+  bottom: 90px;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  background: #f8f5eef2;
+  border-radius: 8px;
+  max-width: calc(100% - 24px);
+}
+.video-watch-action button {
+  padding: 10px;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .video-watch-action {
+    flex-wrap: wrap;
+    bottom: 135px;
+  }
+  .video-watch-action span {
+    width: 100%;
+  }
+}
+
+@media (pointer: coarse) {
+  .viewer {
+    height: calc(100dvh - 76px);
+    overflow: hidden;
+  }
+  .viewer canvas {
+    touch-action: none;
+  }
+  .mobile-controls {
+    display: flex;
+    position: absolute;
+    left: 16px;
+    bottom: calc(22px + env(safe-area-inset-bottom));
+    align-items: flex-end;
+    gap: 14px;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .joystick {
+    height: 126px;
+    width: 126px;
+    border: 2px solid #ffffff91;
+    border-radius: 50%;
+    background: #0b0b0b55;
+    position: relative;
+    touch-action: none;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .joystick:before {
+    content: "";
+    position: absolute;
+    inset: 24px;
+    border: 1px solid #ffffff50;
+    border-radius: 50%;
+  }
+  .joystick-stick {
+    width: 55px;
+    height: 55px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border-radius: 50%;
+    background: #f1e8d2c9;
+    border: 2px solid #ffffffb5;
+    box-shadow: 0 3px 12px #0b0b0b44;
+    pointer-events: none;
+  }
+  .look-hint {
+    font-size: 11px;
+    max-width: 120px;
+    color: var(--color-text);
+    background: #f5f0e3c9;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 12px;
+    pointer-events: none;
+  }
+  .help {
+    display: none;
+  }
+  .guide-toggle {
+    bottom: calc(26px + env(safe-area-inset-bottom));
+    right: 14px;
+    max-width: 160px;
+    justify-content: center;
+  }
+  .tour {
+    top: 12px;
+    right: 12px;
+    bottom: auto;
+    width: min(270px, 72vw);
+  }
+  .scene-title h2 {
+    font-size: 25px;
+  }
+  .scene-title p {
+    font-size: 11px;
+    max-width: 180px;
+  }
+  .crosshair {
+    opacity: 0.4;
+  }
+}
+
+/* Museum overlays: a top band (room + room switcher) and one control column
+   at the bottom right, so nothing overlaps on small screens. */
+.viewer-top {
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  right: 20px;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  pointer-events: none;
+}
+.viewer-top > * {
+  pointer-events: auto;
+}
+.viewer-top .scene-title,
+.viewer-top .room-picker,
+.viewer-tools .guide-toggle {
+  position: static;
+}
+.viewer-top .scene-title {
+  min-width: 0;
+  pointer-events: none;
+}
+.room-select {
+  display: none;
+}
+.viewer-tools .guide-toggle {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+}
+.tool-count::before {
+  content: "(";
+}
+.tool-count::after {
+  content: ")";
+}
+
+@media (max-width: 700px) {
+  .viewer-top {
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    align-items: center;
+    gap: 10px;
+  }
+  .viewer-top .scene-title {
+    flex: 1;
+  }
+  .viewer-top .scene-title small {
+    font-size: 10px;
+  }
+  .viewer-top .scene-title h2 {
+    font-size: 20px;
+    margin: 2px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .viewer-top .scene-title p,
+  .viewer-top .room-picker {
+    display: none;
+  }
+  .room-select {
+    display: block;
+    flex-shrink: 0;
+  }
+  .room-select select {
+    max-width: 44vw;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: #f8f5eef2;
+    color: var(--color-text);
+    font: inherit;
+    font-size: 14px;
+  }
+  /* Round buttons; the text stays available to screen readers. */
+  .viewer-tools {
+    right: 12px;
+    bottom: calc(22px + env(safe-area-inset-bottom));
+    gap: 10px;
+  }
+  .viewer-tools .tool-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .viewer-tools .sound-toggle,
+  .viewer-tools .room-works > button,
+  .viewer-tools .guide-toggle {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    min-height: 0;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 3px 10px #0002;
+    /* Older phone rules placed the guide button absolutely. */
+    top: auto;
+    right: auto;
+    bottom: auto;
+    max-width: none;
+  }
+  .viewer-tools .tool-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: var(--color-accent-text);
+    color: #fff;
+    font-size: 11px;
+    line-height: 20px;
+  }
+  .viewer-tools .tool-count::before,
+  .viewer-tools .tool-count::after {
+    content: none;
+  }
+  /* Opens as a panel above the joystick and the control column. */
+  .room-works ul {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(212px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: calc(100dvh - 340px);
+    z-index: 7;
+  }
+  /* Guided tour and video prompt sit just below the top band. */
+  .viewer .tour {
+    top: 64px;
+    left: 12px;
+    right: 12px;
+    bottom: auto;
+    width: auto;
+    padding: 12px 14px;
+  }
+  .viewer .tour h3 {
+    font-size: 18px;
+    margin: 4px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .viewer .tour p {
+    margin: 0 0 8px;
+  }
+  .viewer .video-watch-action {
+    top: 64px;
+    bottom: auto;
+  }
+  .look-hint {
+    position: absolute;
+    left: 0;
+    bottom: 140px;
+    max-width: 190px !important;
+    margin: 0 !important;
+  }
+}
+@media (max-width: 560px) {
+  .viewer {
+    height: calc(100dvh - 70px);
+  }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useDialogFocus } from "./useDialogFocus";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { preferences, usePreferences, type TextSize } from "./preferences";
@@ -39,31 +39,9 @@ export default function AccessibilityPanel({
   onClose: () => void;
 }) {
   const prefs = usePreferences();
-  const panel = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    panel.current?.querySelector<HTMLElement>("input")?.focus();
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key !== "Tab" || !panel.current) return;
-      const items =
-        panel.current.querySelectorAll<HTMLElement>("button, input");
-      const first = items[0],
-        last = items[items.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", key);
-    return () => {
-      window.removeEventListener("keydown", key);
-      previous?.focus();
-    };
-  }, [onClose]);
+  const panel = useDialogFocus<HTMLDivElement>(onClose, (dialog) =>
+    dialog.querySelector<HTMLElement>("input"),
+  );
   return createPortal(
     <div className="scrim" onClick={onClose}>
       <div

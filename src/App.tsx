@@ -1,5 +1,4 @@
 import { useAuth } from "./features/auth/useAuth";
-import AdminLogin from "./features/auth/AdminLogin";
 import ResetPassword from "./features/auth/ResetPassword";
 import { useDemoMontage } from "./app/useDemoMontage";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
@@ -17,14 +16,12 @@ import { useCollection } from "./app/useCollection";
 import {
   collectionRepository,
   artistRepository,
-  artistAccounts,
-  mediaService,
   loadLinsckerPreview,
-  loadLocalDraftForMigration,
-  hasLocalDraft,
   dataMode,
   authService,
 } from "./app/services";
+import AdminArea from "./app/AdminArea";
+import DismissibleAlert from "./shared/DismissibleAlert";
 import Header from "./shared/Header";
 import ArtworkDialog from "./shared/ArtworkDialog";
 import HomePage from "./features/home/HomePage";
@@ -35,7 +32,6 @@ import AboutPage from "./features/about/AboutPage";
 const LocalPreviewPage = import.meta.env.DEV
   ? lazy(() => import("./features/visit/LocalPreviewPage"))
   : null;
-const AdminPage = lazy(() => import("./features/admin/AdminPage"));
 export default function App() {
   const { page, go } = useNavigation();
   usePageA11y(page);
@@ -77,12 +73,11 @@ export default function App() {
       <Header go={navigate} current={page} />
       <VLibras enabled={prefs.libras} onError={librasFailed} />
       {librasError && (
-        <div role="alert" className="connection-alert">
-          <span>{librasError}</span>
-          <button className="outline" onClick={() => setLibrasError("")}>
-            Fechar
-          </button>
-        </div>
+        <DismissibleAlert
+          text={librasError}
+          actionLabel="Fechar"
+          onAction={() => setLibrasError("")}
+        />
       )}
       <div id="conteudo" tabIndex={-1}>
         {page === "about" && (
@@ -105,12 +100,11 @@ export default function App() {
 
         {/* Visitors never sign in, so access errors only matter in the admin. */}
         {auth.error && (page === "admin" || page === "reset_password") && (
-          <div role="alert" className="connection-alert">
-            <span>{auth.error}</span>
-            <button className="outline" onClick={auth.retry}>
-              Tentar de novo
-            </button>
-          </div>
+          <DismissibleAlert
+            text={auth.error}
+            actionLabel="Tentar de novo"
+            onAction={auth.retry}
+          />
         )}
         {previewError && (
           <p className="local-preview-link" role="alert">
@@ -186,57 +180,17 @@ export default function App() {
                 onLogin={() => navigate("admin")}
               />
             )}
-            {page === "admin" &&
-              dataMode === "supabase" &&
-              !auth.editor &&
-              !artistId &&
-              authService &&
-              (auth.loading ? (
-                <p role="status">Conferindo acesso…</p>
-              ) : (
-                <AdminLogin
-                  service={authService}
-                  signedIn={!!auth.userId}
-                  accountEmail={auth.email}
-                  onExit={() => navigate("home")}
-                />
-              ))}
-            {page === "admin" &&
-              (dataMode === "demo" ||
-                (!auth.loading && (auth.editor || !!artistId))) && (
-                <Suspense
-                  fallback={<main className="admin">Carregando editor…</main>}
-                >
-                  <AdminPage
-                    loadLocalDraft={
-                      hasLocalDraft() ? loadLocalDraftForMigration : undefined
-                    }
-                    state={state}
-                    repository={repository}
-                    access={
-                      artistId
-                        ? { kind: "artist", artistId }
-                        : { kind: "curator" }
-                    }
-                    accounts={auth.editor ? artistAccounts : undefined}
-                    mediaService={mediaService}
-                    onChange={setState}
-                    onExit={() => navigate("home")}
-                    accountEmail={auth.email}
-                    onChangePassword={
-                      authService ? () => navigate("reset_password") : undefined
-                    }
-                    onSignOut={
-                      authService
-                        ? () => {
-                            void authService?.signOut();
-                            navigate("home");
-                          }
-                        : undefined
-                    }
-                  />
-                </Suspense>
-              )}
+            {page === "admin" && (
+              <AdminArea
+                auth={auth}
+                artistId={artistId}
+                state={state}
+                repository={repository}
+                onChange={setState}
+                onExit={() => navigate("home")}
+                onChangePassword={() => navigate("reset_password")}
+              />
+            )}
             {page === "not_found" && (
               <main className="admin">
                 <h1>Página não encontrada</h1>

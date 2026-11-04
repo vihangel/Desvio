@@ -1,0 +1,273 @@
+/* Admin: lists open full-screen forms; designed for phones first. */
+.admin-shell {
+  --admin-surface: #f9f6ef;
+  --admin-line: #dcd7cd;
+  --ok-bg: #e4efe1;
+  --ok-text: #2f5a2a;
+  --warn-bg: #f7e3c4;
+  --warn-text: #6e4300;
+  --review-bg: #e6e3f4;
+  --review-text: #3d357a;
+}
+.admin-shell .admin {
+  max-width: 980px;
+  padding: 24px 32px 120px;
+}
+.admin-shell-form .admin {
+  max-width: 760px;
+}
+.admin-shell
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.admin-shell textarea,
+.admin-shell select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+}
+.admin-shell textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.admin-shell .primary,
+.admin-shell .outline {
+  padding: 11px 18px;
+  min-height: 44px;
+  justify-content: center;
+}
+.admin-shell button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.admin-preview-banner .demo-access {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-preview-banner .demo-access select {
+  min-height: 34px;
+  width: auto;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+/* Section navigation */
+.admin-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 32px;
+  background: var(--color-background);
+  border-bottom: 1px solid var(--admin-line);
+}
+.admin-nav button {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  padding: 14px 14px 12px;
+  min-height: 48px;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+}
+.admin-nav button.active {
+  color: var(--color-ink);
+  border-bottom-color: var(--color-accent);
+}
+.off-air-warning {
+  margin: 0;
+  padding: 10px 32px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  font-size: 14px;
+}
+
+/* Lists */
+.list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.list-header h1,
+.list-header h2,
+.form-page-title h1 {
+  margin: 0;
+  font:
+    normal 32px Georgia,
+    serif;
+}
+.section-description {
+  color: var(--color-muted);
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+.list-header .primary {
+  flex-shrink: 0;
+}
+.list-tools {
+  margin: 20px 0 12px;
+  display: grid;
+  gap: 10px;
+}
+.chip-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chip {
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 7px 13px;
+  min-height: 36px;
+  font-size: 13px;
+}
+.chip span {
+  color: var(--color-muted);
+  margin-left: 2px;
+}
+.chip.active {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+}
+.chip.active span {
+  color: #fffb;
+}
+.card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.item-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  min-height: 72px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+  color: var(--color-text);
+}
+.item-card:hover {
+  border-color: var(--color-ink);
+}
+.item-card > img,
+.item-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 5px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #e6dfd2;
+}
+.item-thumb {
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  color: var(--color-muted);
+}
+.room-number {
+  font:
+    normal 24px Georgia,
+    serif;
+  color: var(--color-ink);
+}
+.item-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.item-text b {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.item-text small {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+.item-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+.item-chevron {
+  font-size: 24px;
+  color: var(--color-muted);
+}
+.room-item {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.room-item .item-card {
+  flex: 1;
+}
+.reorder {
+  display: grid;
+  gap: 4px;
+}
+.reorder button {
+  width: 44px;
+  border: 1px solid var(--admin-line);
+  border-radius: 6px;
+  background: #fff;
+}
+.empty-state {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--color-muted);
+}
+.empty-state .outline {
+  margin-top: 8px;
+}
+
+/* Status pills */
+.status-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+.status-pill.status-draft {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+.status-pill.status-archived {
+  background: #e8e6e1;
+  color: var(--color-muted);
+}
+.status-pill.status-unsaved {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
+.status-pill.status-review {
+  background: var(--review-bg);
+  color: var(--review-text);
+}

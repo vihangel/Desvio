@@ -1,4 +1,3 @@
-import type { MediaAsset } from "./entities";
 // Browser File implements this port, but the domain does not require DOM types.
 export interface UploadSource {
   name: string;
@@ -20,10 +19,10 @@ export interface ModelOptimization {
 export interface MediaService {
   // Largest stored 3D file, after optimization.
   readonly modelLimit: number;
-  // Shrinks textures and compresses geometry before upload; STL/OBJ become GLB.
   // Downscales a photo before upload (profile pictures, thumbnails).
-  optimizeImage?(file: UploadSource, maxSize: number): Promise<UploadSource>;
-  optimizeModel?(
+  optimizeImage(file: UploadSource, maxSize: number): Promise<UploadSource>;
+  // Shrinks textures and compresses geometry before upload; STL/OBJ become GLB.
+  optimizeModel(
     file: UploadSource,
     options?: ModelOptimizationOptions,
   ): Promise<ModelOptimization>;

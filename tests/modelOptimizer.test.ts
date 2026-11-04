@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Document, NodeIO } from "@gltf-transform/core";
 import { optimizeModel } from "../src/infrastructure/media/modelOptimizer";
-import { optimizeForUpload } from "../src/features/admin/modelUpload";
+import { optimizeForUpload } from "../src/features/admin/works/modelUpload";
 import { validateGlb } from "../src/domain/uploadValidation";
 import type {
   ModelOptimization,
@@ -101,7 +101,7 @@ describe("upload escalation", () => {
         return fake((o) => (o.maxTextureSize === 1024 ? 9e6 : 30e6))(o);
       },
       () => {},
-      () => {
+      async () => {
         throw new Error("should not ask");
       },
     );
@@ -116,7 +116,7 @@ describe("upload escalation", () => {
         24e6,
         optimize,
         () => {},
-        () => false,
+        async () => false,
       ),
     ).rejects.toThrow("Simplifique");
     const result = await optimizeForUpload(
@@ -124,7 +124,7 @@ describe("upload escalation", () => {
       24e6,
       optimize,
       () => {},
-      () => true,
+      async () => true,
     );
     expect(result.file.size).toBe(20e6);
   });
@@ -135,7 +135,7 @@ describe("upload escalation", () => {
       24e6,
       fake(() => 5e6, 4_000_000),
       () => {},
-      () => (asked = true),
+      async () => (asked = true),
     );
     expect(asked).toBe(true);
     expect(result.optimizedTriangles).toBeLessThanOrEqual(1_500_000);

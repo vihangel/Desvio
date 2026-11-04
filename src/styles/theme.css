@@ -1,16 +1,6 @@
-.editor-panel fieldset,
-.room-admin fieldset {
-  border: 0;
-  margin: 0;
-  padding: 0;
-  min-width: 0;
-}
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-.editor-panel select[multiple] {
-  min-height: 5rem;
 }
 
 /* Red is an accent; small text uses a darker shade for contrast. */
@@ -39,8 +29,7 @@ nav a:hover,
 .guide-toggle:hover {
   background: #292929;
 }
-.room-picker button.active,
-.admin-tabs button.active {
+.room-picker button.active {
   border-color: var(--color-accent);
   box-shadow: inset 3px 0 0 var(--color-accent);
 }

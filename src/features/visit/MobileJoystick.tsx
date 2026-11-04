@@ -48,7 +48,7 @@ export default function MobileJoystick({ disabled }: { disabled: boolean }) {
     <div className="mobile-controls">
       <div
         className="joystick"
-        aria-label="Controle de movimentação"
+        aria-hidden="true"
         onPointerDown={(e) => {
           setHint(false);
           e.currentTarget.setPointerCapture(e.pointerId);

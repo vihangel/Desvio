@@ -3,7 +3,9 @@ import type {
   CollectionSnapshot,
   CollectionState,
 } from "../../domain/entities";
+import { errorMessage } from "../../domain/errors";
 import type { CollectionRepository } from "../../domain/repository";
+import { useConfirm } from "./ui";
 export default function LocalImport({
   repository,
   revision,
@@ -17,6 +19,7 @@ export default function LocalImport({
 }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const confirm = useConfirm();
   if (!repository.importLocalSnapshot) return null;
   return (
     <details className="editor-feedback local-import">
@@ -29,13 +32,17 @@ export default function LocalImport({
         reenviados depois.
       </p>
       <button
+        type="button"
         className="outline"
         disabled={busy}
         onClick={async () => {
           if (
-            !window.confirm(
-              "Substituir o acervo salvo no Supabase pelo deste navegador? As obras publicadas dele vão para o site.",
-            )
+            !(await confirm({
+              title: "Substituir o acervo salvo no Supabase?",
+              body: "O acervo passa a ser o deste navegador. As obras publicadas dele vão para o site.",
+              confirmLabel: "Substituir",
+              tone: "danger",
+            }))
           )
             return;
           setBusy(true);
@@ -50,9 +57,7 @@ export default function LocalImport({
               "Importado. Confira as obras e reenvie arquivos 3D/áudio se preciso.",
             );
           } catch (error) {
-            setNotice(
-              error instanceof Error ? error.message : "Falha ao importar.",
-            );
+            setNotice(errorMessage(error, "Falha ao importar."));
           } finally {
             setBusy(false);
           }

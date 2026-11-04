@@ -14,6 +14,11 @@ const vector = z.tuple([
   z.number().finite(),
   z.number().finite(),
 ]);
+const storedFile = {
+  src: z.string().optional(),
+  bucket: z.string().optional(),
+  path: z.string().optional(),
+};
 export const snapshotSchema = z.object({
   artists: z.array(
     z.object({
@@ -22,13 +27,7 @@ export const snapshotSchema = z.object({
       location: z.string(),
       bio: z.string(),
       source: z.string(),
-      photo: z
-        .object({
-          src: z.string().optional(),
-          bucket: z.string().optional(),
-          path: z.string().optional(),
-        })
-        .optional(),
+      photo: z.object(storedFile).optional(),
     }),
   ),
   records: z.array(
@@ -60,18 +59,14 @@ export const snapshotSchema = z.object({
       modelFormat: z.enum(MODEL_FORMATS).optional(),
       narration: z
         .object({
-          src: z.string().optional(),
-          bucket: z.string().optional(),
-          path: z.string().optional(),
+          ...storedFile,
           credits: z.string(),
           transcript: z.string(),
           authorized: z.boolean(),
           captions: z.string().optional(),
         })
         .optional(),
-      src: z.string().optional(),
-      bucket: z.string().optional(),
-      path: z.string().optional(),
+      ...storedFile,
       alt: z.string(),
       attribution: z.string(),
       rights: z.enum(RIGHTS),

@@ -10,8 +10,9 @@ export type EditorialStatus = (typeof EDITORIAL_STATUSES)[number];
 export type Rights = (typeof RIGHTS)[number];
 export type MediaType = (typeof MEDIA_TYPES)[number];
 export type Vector3 = [number, number, number];
-// Stored file reference; `src` is resolved at read time like other media.
-export interface StoredImage {
+// A file held in Storage (bucket + path, with `src` signed at read time) or an
+// external/local address (`src` only).
+export interface StoredFile {
   src?: string;
   bucket?: string;
   path?: string;
@@ -22,7 +23,7 @@ export interface Artist {
   location: string;
   bio: string;
   source: string;
-  photo?: StoredImage;
+  photo?: StoredFile;
 }
 export interface RecordCredit {
   artistId: Id;
@@ -47,26 +48,19 @@ export interface CollectionRecord {
   // Set when an artist saved the work; cleared when the curators publish it.
   reviewRequested?: boolean;
 }
-export interface ArtistAudio {
-  src?: string;
-  bucket?: string;
-  path?: string;
+export interface ArtistAudio extends StoredFile {
   credits: string;
   transcript: string;
   authorized: boolean;
   // WebVTT text shown in sync with the audio (stored inline, small).
   captions?: string;
 }
-export interface MediaAsset {
+export interface MediaAsset extends StoredFile {
   modelFormat?: ModelFormat;
   narration?: ArtistAudio;
   id: Id;
   recordId: Id;
   type: MediaType;
-  // Local/demo assets use src; a remote adapter resolves bucket/path at read time.
-  src?: string;
-  bucket?: string;
-  path?: string;
   alt: string;
   attribution: string;
   rights: Rights;

@@ -34,19 +34,6 @@
   .description {
     padding: 25px;
   }
-  .help {
-    font-size: 10px;
-    bottom: 85px;
-    right: 15px;
-  }
-  .tour {
-    top: auto;
-    bottom: 135px;
-    right: 15px;
-  }
-  .scene-title {
-    left: 15px;
-  }
 }
 .mobile-controls {
   display: none;

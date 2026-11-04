@@ -1,3 +1,4 @@
+import { errorMessage } from "../domain/errors";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CollectionState } from "../domain/entities";
 import type { CollectionRepository } from "../domain/repository";
@@ -23,9 +24,7 @@ export function useCollection(
       }
     } catch (error) {
       if (token === request.current)
-        setError(
-          error instanceof Error ? error.message : "Falha ao carregar acervo.",
-        );
+        setError(errorMessage(error, "Falha ao carregar acervo."));
     } finally {
       if (token === request.current) setLoading(false);
     }
@@ -42,7 +41,7 @@ export function useCollection(
       setLoadedKey(accessKey);
       setError("");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Falha ao restaurar.");
+      setError(errorMessage(error, "Falha ao restaurar."));
     }
   };
   return {

@@ -45,4 +45,18 @@ values ('UUID_REAL_DA_CONTA', 'curator');
 
 O e-mail reservado é configurado privadamente pelo operador, fora das migrações versionadas. A concessão inicial só pode ser reivindicada uma vez.
 
-Para instalar em outro banco vazio, execute os cinco arquivos completos na ordem acima. O quinto instala o mecanismo de concessão, mas não configura um e-mail. Não reaplique instalações existentes. Consulte [SUPABASE.md](SUPABASE.md) para limites e políticas.
+Para instalar em outro banco vazio, execute todos os arquivos de `supabase/migrations/` na ordem do nome. O arquivo `20261014183748_desvio_admin_bootstrap.sql` instala o mecanismo de concessão, mas não configura um e-mail. Não reaplique instalações existentes. Consulte [SUPABASE.md](SUPABASE.md) para limites e políticas.
+
+## Migrações posteriores
+
+- `20261014200000_desvio_replace_draft_from_local.sql`: importar o acervo local depois de haver edições remotas.
+- `20261014210000_desvio_record_status.sql`: status por obra.
+- `20261015090000_desvio_artist_accounts.sql`: contas de artista.
+- `20261103090000_desvio_schema_improvements.sql`: **ainda não aplicada no projeto**. O que muda:
+  - **Remover acesso** deixa de falhar para quem já editou: o histórico fica, sem o vínculo com a conta.
+  - Edições públicas sem uso são **apagadas de vez**: as antigas, ao aplicar, e a atual, a cada vez que a exposição sai do ar. O rascunho não é afetado, e a edição pública é recriada ao colocar no ar de novo.
+  - Novos índices e checagens de integridade. Se algum dado existente não passar, a migração para com erro e nada é alterado.
+  - Um único validador e funções comuns para os comandos da curadoria e de artista. A legenda `.vtt` passa a ser validada também no servidor, e a importação local passa a exigir o mesmo das obras publicadas.
+  - Saem funções sem uso (`desvio_import_local`, `desvio_remove_artist_account`) e o tipo `application/octet-stream` do bucket, já que os modelos sempre chegam como GLB.
+
+  Pode ser aplicada antes ou depois de publicar o site: o código novo funciona com ou sem ela.

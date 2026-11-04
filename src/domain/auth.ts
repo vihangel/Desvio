@@ -1,4 +1,4 @@
-export type AuthRole = "admin" | "curator" | "artist";
+type AuthRole = "admin" | "curator" | "artist";
 export interface AuthIdentity {
   userId: string;
   email: string;

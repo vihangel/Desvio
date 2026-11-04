@@ -11,7 +11,7 @@ const items: [Page, string][] = [
 ];
 // Real links (new tab, copy address, announced as links) that still navigate
 // inside the app on a plain click.
-export function AppLink({
+function AppLink({
   page,
   go,
   current,

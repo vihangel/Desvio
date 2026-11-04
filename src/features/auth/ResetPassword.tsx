@@ -1,16 +1,14 @@
 import { useState } from "react";
 import type { AuthService } from "../../domain/auth";
+import GatePage from "../../shared/GatePage";
+import { useFormSubmit } from "./useFormSubmit";
 // Reached from the e-mailed link. Supabase reads the link and opens a
 // temporary session, so the person only types the new password here.
 const linkParams = new URLSearchParams(window.location.hash.slice(1));
-// Invites from the curators land here too, to create the first password.
-const invited = linkParams.get("type") === "invite";
-const linkError = (() => {
-  const params = linkParams;
-  return params.get("error_code") === "otp_expired"
+const linkError =
+  linkParams.get("error_code") === "otp_expired"
     ? "Este link expirou ou já foi usado."
-    : params.get("error_description");
-})();
+    : linkParams.get("error_description");
 export default function ResetPassword({
   service,
   signedIn,
@@ -26,18 +24,11 @@ export default function ResetPassword({
 }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const { busy, error, setError, submit } = useFormSubmit(
+    "Falha ao salvar a senha.",
+  );
   return (
-    <main className="admin admin-gate">
-      <div className="eyebrow">ÁREA ADMINISTRATIVA</div>
-      <h1>{invited ? "Crie sua senha" : "Nova senha"}</h1>
-      {invited && signedIn && !loading && (
-        <p>
-          Você foi convidada para o Desvio. Defina uma senha para entrar e
-          cuidar das suas salas.
-        </p>
-      )}
+    <GatePage title="Nova senha">
       {loading ? (
         <p role="status">Validando o link…</p>
       ) : !signedIn ? (
@@ -52,30 +43,20 @@ export default function ResetPassword({
         </>
       ) : (
         <form
-          onSubmit={async (e) => {
-            e.preventDefault();
+          onSubmit={(e) => {
             if (password !== confirm) {
+              e.preventDefault();
               setError("As senhas não coincidem.");
               return;
             }
-            setBusy(true);
-            setError("");
-            try {
+            void submit(async () => {
               await service.updatePassword(password);
               onDone();
-            } catch (error) {
-              setError(
-                error instanceof Error
-                  ? error.message
-                  : "Falha ao salvar a senha.",
-              );
-            } finally {
-              setBusy(false);
-            }
+            })(e);
           }}
         >
           <label>
-            {invited ? "Senha" : "Nova senha"}
+            Nova senha
             <input
               type="password"
               autoComplete="new-password"
@@ -97,20 +78,14 @@ export default function ResetPassword({
             />
           </label>
           <button className="primary" disabled={busy}>
-            {busy
-              ? "Salvando…"
-              : invited
-                ? "Criar senha e entrar"
-                : "Salvar nova senha e entrar"}
+            {busy ? "Salvando…" : "Salvar nova senha e entrar"}
           </button>
           {error && <p role="alert">{error}</p>}
-          {!invited && (
-            <button className="link-button" type="button" onClick={onDone}>
-              Voltar ao admin
-            </button>
-          )}
+          <button className="link-button" type="button" onClick={onDone}>
+            Voltar ao admin
+          </button>
         </form>
       )}
-    </main>
+    </GatePage>
   );
 }

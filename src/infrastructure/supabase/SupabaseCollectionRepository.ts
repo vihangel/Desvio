@@ -1,5 +1,6 @@
 import { SupabaseMediaService } from "./SupabaseMediaService";
-import { youtubeId } from "../../domain/youtube";
+import { youtubeWatchUrl } from "../../domain/youtube";
+import { isLocalOnlyUrl, isSessionUrl } from "../../domain/mediaUrls";
 import type { CollectionRepository } from "../../domain/repository";
 import type {
   Artist,
@@ -7,12 +8,20 @@ import type {
   CollectionState,
   Exhibition,
   ExhibitionRoom,
+  MediaAsset,
   RecordDraft,
 } from "../../domain/entities";
 import { stateSchema } from "../serialization/collectionSchema";
 import { validateLiveRecord, validateRecord } from "../../domain/validation";
 import type { RecordStatus } from "../../domain/publication";
 import type { RemoteClient } from "./client";
+// What is stored for a work's media: Storage paths instead of signed URLs, one
+// canonical YouTube link.
+function durableMedia(media: MediaAsset) {
+  if (media.type === "video") media.src = youtubeWatchUrl(media.src ?? "");
+  if (media.path) delete media.src;
+  if (media.narration?.path) delete media.narration.src;
+}
 export class SupabaseCollectionRepository implements CollectionRepository {
   readonly mode = "supabase" as const;
   // Artists use their own command, limited to their rooms and works.
@@ -88,19 +97,10 @@ export class SupabaseCollectionRepository implements CollectionRepository {
     validateRecord(draft, state.draft);
     validateLiveRecord(draft, state.draft);
     const durable = structuredClone(draft);
-    if (durable.media.type === "video")
-      durable.media.src = `https://www.youtube.com/watch?v=${youtubeId(durable.media.src ?? "")}`;
-    if (durable.media.path) delete durable.media.src;
-    if (durable.media.narration?.path) delete durable.media.narration.src;
-    if (
-      durable.media.narration?.src?.startsWith("blob:") ||
-      durable.media.narration?.src?.startsWith("data:")
-    )
+    durableMedia(durable.media);
+    if (isLocalOnlyUrl(durable.media.narration?.src))
       throw new Error("Envie o áudio ao Storage antes de salvar.");
-    if (
-      durable.media.src?.startsWith("blob:") ||
-      durable.media.src?.startsWith("data:")
-    )
+    if (isLocalOnlyUrl(durable.media.src))
       throw new Error("Envie o arquivo ao Storage antes de salvar.");
     return this.command("save_record", durable, revision);
   }
@@ -119,7 +119,7 @@ export class SupabaseCollectionRepository implements CollectionRepository {
   saveArtist(artist: Artist, revision: number) {
     const durable = structuredClone(artist);
     if (durable.photo?.path) delete durable.photo.src;
-    if (durable.photo?.src?.startsWith("blob:"))
+    if (isLocalOnlyUrl(durable.photo?.src))
       throw new Error("Envie a foto ao Storage antes de salvar.");
     if (durable.photo && !durable.photo.src && !durable.photo.path)
       delete durable.photo;
@@ -151,10 +151,7 @@ export class SupabaseCollectionRepository implements CollectionRepository {
   async importLocalSnapshot(snapshot: CollectionSnapshot, revision: number) {
     const durable = structuredClone(snapshot);
     for (const media of durable.media) {
-      if (media.path) delete media.src;
-      if (media.narration?.path) delete media.narration.src;
-      if (media.type === "video")
-        media.src = `https://www.youtube.com/watch?v=${youtubeId(media.src ?? "")}`;
+      durableMedia(media);
       if (media.src?.startsWith("data:image/") && media.type === "image") {
         const blob = await (await fetch(media.src)).blob();
         const uploaded = await new SupabaseMediaService(this.client).prepare(
@@ -169,8 +166,8 @@ export class SupabaseCollectionRepository implements CollectionRepository {
         Object.assign(media, uploaded);
         delete media.src;
       }
-      if (media.src?.startsWith("blob:")) delete media.src;
-      if (media.narration?.src?.startsWith("blob:")) delete media.narration.src;
+      if (isSessionUrl(media.src)) delete media.src;
+      if (isSessionUrl(media.narration?.src)) delete media.narration!.src;
       if (media.narration && !media.narration.src && !media.narration.path)
         delete media.narration;
     }
@@ -181,12 +178,7 @@ export class SupabaseCollectionRepository implements CollectionRepository {
         expected_revision: revision,
       },
     );
-    if (error)
-      throw new Error(
-        error.code === "PGRST202"
-          ? "Aplique a migration desvio_replace_draft_from_local no Supabase antes de importar."
-          : error.message,
-      );
+    if (error) throw new Error(error.message);
     return this.hydrate(data);
   }
   initialize(snapshot: CollectionSnapshot, revision: number) {

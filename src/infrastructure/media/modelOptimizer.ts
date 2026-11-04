@@ -1,3 +1,5 @@
+import { errorMessage } from "../../domain/errors";
+import { UPLOAD_LIMITS, megabytesLabel } from "../../domain/constants";
 import { WebIO, type Document } from "@gltf-transform/core";
 import { ALL_EXTENSIONS, EXTTextureWebP } from "@gltf-transform/extensions";
 import {
@@ -23,7 +25,6 @@ import type {
 } from "../../domain/media";
 import { validateModel } from "../../domain/uploadValidation";
 // Large originals are accepted because the stored file is the optimized one.
-export const MODEL_INPUT_LIMIT = 150_000_000;
 const TEXTURE_FORMATS = ["image/png", "image/jpeg", "image/webp"];
 async function toGlb(bytes: ArrayBuffer, format: "stl" | "obj") {
   const object =
@@ -110,9 +111,9 @@ export async function optimizeModel(
   source: UploadSource,
   options: ModelOptimizationOptions = {},
 ): Promise<ModelOptimization> {
-  if (source.size > MODEL_INPUT_LIMIT)
+  if (source.size > UPLOAD_LIMITS.modelInput)
     throw new Error(
-      `Arquivo acima de ${MODEL_INPUT_LIMIT / 1_000_000} MB. Reduza o modelo antes de enviar.`,
+      `Arquivo acima de ${megabytesLabel(UPLOAD_LIMITS.modelInput)}. Reduza o modelo antes de enviar.`,
     );
   const original = await source.arrayBuffer();
   const format = validateModel(original, source.name);
@@ -133,7 +134,7 @@ export async function optimizeModel(
   try {
     document = await io.readBinary(glb);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "";
+    const message = errorMessage(error, "");
     throw new Error(
       /draco/i.test(message)
         ? "Modelo com compressão Draco. Exporte o GLB sem Draco para que o Desvio otimize o arquivo."

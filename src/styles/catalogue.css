@@ -126,7 +126,4 @@
     gap: 8px;
     font-size: 11px;
   }
-  .viewer {
-    height: calc(100dvh - 70px);
-  }
 }

@@ -173,14 +173,13 @@ it("lists accounts for curators and blocks deleting credited artists", async () 
   await as("authenticated", curator);
   const accounts = (
     await db.query<{
-      list: { email: string; artistId: string; confirmed: boolean }[];
+      list: { email: string; artistId: string }[];
     }>("select public.desvio_list_artist_accounts() list")
   ).rows[0].list;
   expect(accounts).toEqual([
     expect.objectContaining({
       email: "artist@example.com",
       artistId: linscker,
-      confirmed: false,
     }),
   ]);
   const state = await load();

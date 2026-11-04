@@ -1,3 +1,4 @@
+import { errorMessage } from "../../domain/errors";
 import { useEffect, useRef, useState } from "react";
 const OFFLINE =
   "Não foi possível falar com o servidor. Verifique a conexão e tente de novo.";
@@ -5,9 +6,7 @@ const OFFLINE =
 const friendly = (error: unknown) =>
   error instanceof TypeError || /fetch|network|load failed/i.test(String(error))
     ? OFFLINE
-    : error instanceof Error
-      ? error.message
-      : "Falha ao conferir acesso.";
+    : errorMessage(error, "Falha ao conferir acesso.");
 import type { AuthIdentity, AuthService } from "../../domain/auth";
 export function useAuth(service: AuthService | undefined) {
   const [state, setState] = useState({

@@ -4,7 +4,7 @@ O projeto **Desvio Museu Virtual** (`rptvhzdbenwrnhxhrfjb`) está conectado, com
 
 O Supabase é a fonte padrão do admin e do museu. Login usa Auth; permissões usam vínculos privados de curadoria e RLS. Cadastro de conta não concede acesso editorial, exceto ao e-mail reservado e confirmado para o primeiro administrador. `user_metadata` não participa da autorização.
 
-Rascunho e publicação são edições independentes. Salvar não altera o museu público: envie para revisão e publique. Operações usam revisão esperada e bloqueio transacional; conflitos exigem recarregar. Arquivar retira a edição da leitura pública.
+Cada obra tem status próprio (veja “Status das obras”). Salvar uma obra publicada atualiza o site na hora; rascunhos e obras desativadas ficam fora dele. Operações usam revisão esperada e bloqueio transacional; conflitos exigem recarregar antes de salvar.
 
 ## Arquivos e montagem
 
@@ -22,6 +22,8 @@ Rascunho e publicação são edições independentes. Salvar não altera o museu
 `desvio_collections` mantém revisão e ponteiros para edições. `desvio_versions` guarda o cabeçalho da exposição; artistas, registros, mídias, salas e montagens têm tabelas próprias com IDs e FKs por edição. Conteúdo editorial extensível fica em JSONB por entidade, não em um JSON único do acervo. Autorizações privadas ficam numa tabela separada e não entram na leitura pública.
 
 As tabelas têm RLS. Clientes só têm SELECT; escrita ocorre na RPC. O comando privilegiado fica no schema privado, tem `search_path` fixo, EXECUTE restrito e verifica `auth.uid()` e vínculo de curadoria antes de qualquer escrita. A função pública é SECURITY INVOKER. Eventos editoriais são registrados na mesma transação.
+
+Os campos de cada entidade continuam em `content jsonb` de propósito. O app sempre lê e grava a edição inteira, então colunas separadas não trariam ganho hoje, e migrar exigiria reescrever dados de produção. As colunas existentes (`id`, `record_id`, `sort_order` etc.) têm checagens que as mantêm iguais ao JSON. Vale rever quando entrarem múltiplas exposições ou mídias por obra, previstas no [ROADMAP](ROADMAP.md).
 
 As entidades de domínio e validações de runtime são independentes do SDK. Os tipos gerados do banco ainda não foram incorporados ao adaptador; as respostas das RPCs são validadas em runtime. Não confunda esses tipos com os DTOs do domínio.
 

@@ -3,32 +3,28 @@ import {
   validateAudio,
   validateImage,
 } from "../../domain/uploadValidation";
-import type {
-  MediaService,
-  ModelOptimizationOptions,
-  UploadSource,
-} from "../../domain/media";
-import type { MediaAsset } from "../../domain/entities";
+import type { MediaService, UploadSource } from "../../domain/media";
+import {
+  UPLOAD_LIMITS,
+  megabytesLabel,
+  type ModelFormat,
+} from "../../domain/constants";
+import { isSessionUrl } from "../../domain/mediaUrls";
+import { optimizeImage, optimizeModel } from "../media/optimizers";
+const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 export class LocalMediaService implements MediaService {
-  readonly modelLimit = 12_000_000;
-  async optimizeImage(file: UploadSource, maxSize: number) {
-    const { optimizeImage } = await import("../media/imageOptimizer");
-    return optimizeImage(file, maxSize);
-  }
-  async optimizeModel(file: UploadSource, options?: ModelOptimizationOptions) {
-    const { optimizeModel } = await import("../media/modelOptimizer");
-    return optimizeModel(file, options);
-  }
+  readonly modelLimit = UPLOAD_LIMITS.local.file;
+  readonly optimizeImage = optimizeImage;
+  readonly optimizeModel = optimizeModel;
   async prepare(
     file: UploadSource,
     type: "image" | "model" | "audio",
-  ): Promise<{
-    src: string;
-    modelFormat?: import("../../domain/constants").ModelFormat;
-  }> {
+  ): Promise<{ src: string; modelFormat?: ModelFormat }> {
     if (type === "model" || type === "audio") {
-      if (file.size > this.modelLimit)
-        throw new Error("Arquivo demonstrativo de até 12 MB.");
+      if (file.size > UPLOAD_LIMITS.local.file)
+        throw new Error(
+          `Arquivo demonstrativo de até ${megabytesLabel(UPLOAD_LIMITS.local.file)}.`,
+        );
       const bytes = await file.arrayBuffer();
       const modelFormat =
         type === "model" ? validateModel(bytes, file.name) : undefined;
@@ -44,10 +40,12 @@ export class LocalMediaService implements MediaService {
       };
     }
     if (
-      !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
-      file.size > 1_000_000
+      !IMAGE_TYPES.includes(file.type) ||
+      file.size > UPLOAD_LIMITS.local.image
     )
-      throw new Error("Selecione PNG, JPEG ou WebP de até 1 MB.");
+      throw new Error(
+        `Selecione PNG, JPEG ou WebP de até ${megabytesLabel(UPLOAD_LIMITS.local.image)}.`,
+      );
     const bytes = await file.arrayBuffer();
     validateImage(bytes, file.type);
     return new Promise((resolve, reject) => {
@@ -58,7 +56,7 @@ export class LocalMediaService implements MediaService {
     });
   }
   release(url: string) {
-    if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+    if (isSessionUrl(url)) URL.revokeObjectURL(url);
   }
 }
 export const localMediaService = new LocalMediaService();

@@ -43,36 +43,6 @@ it("grants the bootstrap administrator only after the selected email is verified
     (await db.query("select * from public.desvio_memberships")).rows,
   ).toHaveLength(1);
 });
-it("imports local changes into the draft once and preserves the public edition", async () => {
-  const owner = "33333333-3333-4333-8333-333333333333";
-  await db.exec("set role authenticated");
-  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [
-    owner,
-  ]);
-  const loaded = await db.query<{
-    state: {
-      draft: { records: { title: string }[] };
-      published: { records: { title: string }[] };
-    };
-  }>("select public.desvio_load_collection() state");
-  const draft = loaded.rows[0].state.draft;
-  const previous = loaded.rows[0].state.published.records[0].title;
-  draft.records[0].title = "My local edit";
-  const imported = await db.query<{
-    state: { revision: number; draft: typeof draft; published: typeof draft };
-  }>("select public.desvio_import_local($1::jsonb,0) state", [
-    JSON.stringify(draft),
-  ]);
-  expect(imported.rows[0].state.revision).toBe(1);
-  expect(imported.rows[0].state.draft.records[0].title).toBe("My local edit");
-  expect(imported.rows[0].state.published.records[0].title).toBe(previous);
-  await expect(
-    db.query("select public.desvio_import_local($1::jsonb,1)", [
-      JSON.stringify(draft),
-    ]),
-  ).rejects.toThrow("Já há alterações remotas");
-  await db.exec("reset role");
-});
 it("replaces the saved works with a local snapshot and publishes the published ones", async () => {
   const owner = "33333333-3333-4333-8333-333333333333";
   await db.exec("set role authenticated");

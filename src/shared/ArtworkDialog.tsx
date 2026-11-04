@@ -1,11 +1,29 @@
 import ArtistNarration from "./ArtistNarration";
 import YouTubeVideo from "./YouTubeVideo";
 import { mediaPlayback } from "./mediaPlayback";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { useDialogFocus } from "./useDialogFocus";
 import { createPortal } from "react-dom";
 import { X, Pause, Volume2 } from "lucide-react";
-import type { Artwork } from "../domain/entities";
+import type { Artwork, TechnicalDetails } from "../domain/entities";
 import { useNarration } from "./useNarration";
+function TechnicalDetailsList({ details }: { details: TechnicalDetails }) {
+  const rows = [
+    ["Técnica", details.technique],
+    ["Dimensões da obra", details.dimensions],
+    ["Materiais", details.materials],
+  ].filter(([, value]) => value);
+  return rows.length ? (
+    <dl className="technical-details">
+      {rows.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  ) : null;
+}
 export default function ArtworkDialog({
   selected,
   onClose: close,
@@ -14,42 +32,15 @@ export default function ArtworkDialog({
   onClose: () => void;
 }) {
   const { speaking, toggle } = useNarration();
-  const dialog = useRef<HTMLDivElement>(null);
+  const dialog = useDialogFocus<HTMLDivElement>(close);
   useEffect(() => {
     mediaPlayback.stopAll();
-    const previous = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    dialog.current?.focus();
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-      if (e.key === "Tab") {
-        const items = dialog.current?.querySelectorAll<HTMLElement>(
-          "button,a[href],audio,iframe,input,select,textarea",
-        );
-        if (!items?.length) return;
-        const first = items[0],
-          last = items[items.length - 1];
-        if (
-          e.shiftKey &&
-          (document.activeElement === first ||
-            document.activeElement === dialog.current)
-        ) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    window.addEventListener("keydown", key);
     return () => {
-      window.removeEventListener("keydown", key);
       document.body.style.overflow = previousOverflow;
-      previous?.focus();
     };
-  }, [close]);
+  }, []);
   return createPortal(
     <div className="scrim" onClick={close}>
       <div
@@ -86,20 +77,7 @@ export default function ArtworkDialog({
             <h3>{selected.author}</h3>
             <p>{selected.description}</p>
             {selected.technicalDetails && (
-              <dl className="technical-details">
-                <div>
-                  <dt>Técnica</dt>
-                  <dd>{selected.technicalDetails.technique}</dd>
-                </div>
-                <div>
-                  <dt>Dimensões da obra</dt>
-                  <dd>{selected.technicalDetails.dimensions}</dd>
-                </div>
-                <div>
-                  <dt>Materiais</dt>
-                  <dd>{selected.technicalDetails.materials}</dd>
-                </div>
-              </dl>
+              <TechnicalDetailsList details={selected.technicalDetails} />
             )}
             {selected.rights === "preview" && (
               <>

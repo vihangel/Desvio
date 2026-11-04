@@ -3,7 +3,6 @@ import type { CollectionSnapshot, ExhibitionRoom } from "./entities";
 // rooms that list them and the works placed in those rooms.
 export type Access = { kind: "curator" } | { kind: "artist"; artistId: string };
 export const CURATOR: Access = { kind: "curator" };
-export const isCurator = (access: Access) => access.kind === "curator";
 export function editableRooms(
   access: Access,
   snapshot: CollectionSnapshot,

@@ -1,3 +1,4 @@
+import { errorMessage } from "../domain/errors";
 import { stateSchema } from "../infrastructure/serialization/collectionSchema";
 import { withRecordStatuses } from "../domain/publication";
 import { SupabaseAuthService } from "../infrastructure/supabase/SupabaseAuthService";
@@ -10,7 +11,7 @@ import { SupabaseArtistAccounts } from "../infrastructure/supabase/SupabaseArtis
 const configuredMode = import.meta.env.VITE_DATA_MODE ?? "supabase";
 export const dataMode = configuredMode === "demo" ? "demo" : "supabase";
 let remoteError = "";
-export const remoteClient = (() => {
+const remoteClient = (() => {
   if (dataMode !== "supabase") return undefined;
   if (configuredMode !== "supabase") {
     remoteError = "VITE_DATA_MODE deve ser demo ou supabase.";
@@ -22,8 +23,7 @@ export const remoteClient = (() => {
       import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "",
     );
   } catch (error) {
-    remoteError =
-      error instanceof Error ? error.message : "Configuração inválida.";
+    remoteError = errorMessage(error, "Configuração inválida.");
     return undefined;
   }
 })();

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { focusPageHeading } from "../../shared/pageFocus";
 export type AdminSection = "works" | "artists" | "rooms" | "preview";
 // `id` is "nova" for a new item, an id to edit, or undefined for the list.
-export interface AdminRoute {
+interface AdminRoute {
   section: AdminSection;
   id?: string;
   focus?: string;

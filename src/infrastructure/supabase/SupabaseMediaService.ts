@@ -3,36 +3,31 @@ import {
   validateAudio,
   validateImage,
 } from "../../domain/uploadValidation";
-import type {
-  MediaService,
-  ModelOptimizationOptions,
-  UploadSource,
-} from "../../domain/media";
-import type { MediaAsset } from "../../domain/entities";
+import type { MediaService, UploadSource } from "../../domain/media";
+import { UPLOAD_LIMITS, megabytesLabel } from "../../domain/constants";
+import { optimizeImage, optimizeModel } from "../media/optimizers";
 import type { RemoteClient } from "./client";
+const BUCKET = "desvio-media";
+const IMAGE_EXTENSIONS: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
 export class SupabaseMediaService implements MediaService {
-  readonly modelLimit = 24_000_000;
-  async optimizeImage(file: UploadSource, maxSize: number) {
-    const { optimizeImage } = await import("../media/imageOptimizer");
-    return optimizeImage(file, maxSize);
-  }
-  async optimizeModel(file: UploadSource, options?: ModelOptimizationOptions) {
-    const { optimizeModel } = await import("../media/modelOptimizer");
-    return optimizeModel(file, options);
-  }
+  readonly modelLimit = UPLOAD_LIMITS.remote.model;
+  readonly optimizeImage = optimizeImage;
+  readonly optimizeModel = optimizeModel;
   constructor(private readonly client: () => RemoteClient) {}
   async prepare(file: UploadSource, type: "image" | "model" | "audio") {
-    const limit =
-      type === "model"
-        ? this.modelLimit
-        : type === "audio"
-          ? 20_000_000
-          : 5_000_000;
+    const limit = UPLOAD_LIMITS.remote[type];
     if (file.size > limit)
-      throw new Error(`Arquivo acima do limite de ${limit / 1_000_000} MB.`);
+      throw new Error(`Arquivo acima do limite de ${megabytesLabel(limit)}.`);
     const bytes = await file.arrayBuffer();
     const modelFormat =
       type === "model" ? validateModel(bytes, file.name) : undefined;
+    // The bucket only takes GLB: models go through the optimizer first.
+    if (modelFormat && modelFormat !== "glb")
+      throw new Error("Otimize o modelo antes de enviar.");
     const audio =
       type === "audio" ? validateAudio(bytes, file.name) : undefined;
     if (type === "image") validateImage(bytes, file.type);
@@ -42,36 +37,29 @@ export class SupabaseMediaService implements MediaService {
       throw new Error("Entre na conta antes de enviar arquivos.");
     const ext =
       type === "model"
-        ? modelFormat
+        ? "glb"
         : type === "audio"
           ? audio!.ext
-          : { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" }[
-              file.type
-            ];
+          : IMAGE_EXTENSIONS[file.type];
+    const contentType =
+      type === "model"
+        ? "model/gltf-binary"
+        : type === "audio"
+          ? audio!.mime
+          : file.type;
     const path = `${data.user.id}/${crypto.randomUUID()}.${ext}`;
-    const bucket = "desvio-media";
     const upload = await client.storage
-      .from(bucket)
-      .upload(path, new Blob([bytes]), {
-        contentType:
-          type === "model"
-            ? modelFormat === "glb"
-              ? "model/gltf-binary"
-              : "application/octet-stream"
-            : type === "audio"
-              ? audio!.mime
-              : file.type,
-        upsert: false,
-      });
+      .from(BUCKET)
+      .upload(path, new Blob([bytes]), { contentType, upsert: false });
     if (upload.error) throw upload.error;
     const signed = await client.storage
-      .from(bucket)
+      .from(BUCKET)
       .createSignedUrl(path, 3600);
     if (signed.error) {
-      await client.storage.from(bucket).remove([path]);
+      await client.storage.from(BUCKET).remove([path]);
       throw signed.error;
     }
-    return { src: signed.data.signedUrl, bucket, path, modelFormat };
+    return { src: signed.data.signedUrl, bucket: BUCKET, path, modelFormat };
   }
   release(_url: string) {
     /* Persistent files are retired by the curator, never by URL expiry. */

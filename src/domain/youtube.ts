@@ -24,3 +24,6 @@ export function youtubeId(value: string): string | null {
     return null;
   }
 }
+// One stored form for any accepted link.
+export const youtubeWatchUrl = (value: string) =>
+  `https://www.youtube.com/watch?v=${youtubeId(value)}`;

@@ -1,6 +1,6 @@
 import type { ExhibitionRoom, MediaAsset, Placement } from "./entities";
 import { ROOM_DEPTH } from "./constants";
-export interface Slot {
+interface Slot {
   id: string;
   type: MediaAsset["type"];
   position: Placement["position"];

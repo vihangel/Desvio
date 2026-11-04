@@ -1,3 +1,4 @@
+import { errorMessage } from "../domain/errors";
 import { useEffect, useState } from "react";
 import type { CollectionSnapshot } from "../domain/entities";
 import { loadLinsckerPreview } from "./services";
@@ -20,11 +21,7 @@ export function useDemoMontage(
       },
       (error) => {
         if (active)
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Falha ao carregar montagem.",
-          );
+          setError(errorMessage(error, "Falha ao carregar montagem."));
       },
     );
     return () => {

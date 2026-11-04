@@ -1,0 +1,222 @@
+/* Toast: above the pinned action bar. */
+.admin-toast {
+  position: fixed;
+  z-index: 40;
+  right: 20px;
+  bottom: 88px;
+  max-width: min(440px, calc(100vw - 32px));
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--color-ink);
+  color: #fff;
+  box-shadow: 0 8px 24px #0003;
+  line-height: 1.45;
+  font-size: 14px;
+}
+.admin-toast.toast-success {
+  background: #23421f;
+}
+.admin-toast.toast-error {
+  background: var(--color-accent-text);
+}
+.admin-toast button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 4px;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+/* Confirmation dialog */
+.confirm-scrim {
+  z-index: 50;
+}
+.confirm-dialog {
+  width: min(440px, 100%);
+  background: #f8f5ee;
+  border-radius: 12px;
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+}
+.confirm-dialog h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.confirm-body {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Preview and tools */
+.admin-preview-toolbar {
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.admin-preview-toolbar span {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.editor-feedback {
+  background: #eae6df;
+  padding: 12px;
+  border-radius: 5px;
+  color: var(--color-text);
+}
+.local-import {
+  margin-top: 28px;
+}
+.local-import summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.list-page > .form-section {
+  margin-top: 28px;
+}
+
+/* Phones */
+@media (max-width: 700px) {
+  .admin-shell .admin {
+    padding: 18px 16px 110px;
+  }
+  .admin-nav {
+    padding: 0 8px;
+  }
+  .off-air-warning {
+    padding: 10px 16px;
+  }
+  .list-header {
+    flex-direction: column;
+  }
+  .list-header .primary {
+    width: 100%;
+  }
+  .list-header h1,
+  .list-header h2,
+  .form-page-title h1 {
+    font-size: 26px;
+  }
+  .form-section {
+    padding: 16px;
+  }
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+  .form-actions {
+    margin: 20px -16px 0;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  .form-actions .primary {
+    flex: 1;
+  }
+  .admin-toast {
+    left: 16px;
+    right: 16px;
+    bottom: 84px;
+    max-width: none;
+  }
+  .confirm-actions > * {
+    flex: 1;
+  }
+  .admin-preview-banner {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  .admin-preview-banner span {
+    min-width: 0;
+  }
+}
+.credentials-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px solid var(--ok-text);
+  background: var(--ok-bg);
+}
+.credentials-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+.credentials-card dl {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.credentials-card dl div {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px;
+}
+.credentials-card dt {
+  color: var(--color-muted);
+}
+.credentials-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.credentials-card code {
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.number-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.number-input span {
+  color: var(--color-muted);
+  min-width: 14px;
+}
+.field input[aria-invalid="true"] {
+  border-color: var(--color-accent-text);
+}
+.field-error {
+  color: var(--color-accent-text);
+}
+.field-row-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.orientation {
+  display: grid;
+  gap: 8px;
+}
+.orientation-row {
+  display: grid;
+  grid-template-columns: 1fr auto 52px auto;
+  align-items: center;
+  gap: 8px;
+}
+.orientation-row output {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.orientation-row .outline {
+  min-width: 72px;
+  padding: 8px 10px;
+}
+@media (max-width: 700px) {
+  .field-row-3 {
+    grid-template-columns: 1fr;
+  }
+}

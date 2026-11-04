@@ -2,9 +2,9 @@ import type {
   ModelOptimization,
   ModelOptimizationOptions,
   UploadSource,
-} from "../../domain/media";
+} from "../../../domain/media";
 // Above this, a scene stays heavy on phones even when the file is small.
-export const HEAVY_TRIANGLES = 1_500_000;
+const HEAVY_TRIANGLES = 1_500_000;
 export const megabytes = (bytes: number) =>
   bytes < 1_000_000
     ? `${Math.max(1, Math.round(bytes / 1000))} KB`
@@ -16,7 +16,7 @@ export async function optimizeForUpload(
   limit: number,
   optimize: (options: ModelOptimizationOptions) => Promise<ModelOptimization>,
   report: (message: string) => void,
-  confirm: (message: string) => boolean = (message) => window.confirm(message),
+  confirm: (message: string) => Promise<boolean>,
 ) {
   report(`Otimizando “${file.name}” (${megabytes(file.size)})…`);
   let result = await optimize({});
@@ -30,9 +30,9 @@ export async function optimizeForUpload(
     ? `Mesmo otimizado, o modelo ficou com ${megabytes(result.file.size)} (limite: ${megabytes(limit)}).`
     : `O modelo tem ${result.triangles.toLocaleString("pt-BR")} triângulos e pode pesar no celular.`;
   if (
-    !confirm(
-      `${reason}\n\nSimplificar a malha? Isso reduz o número de triângulos e pode apagar detalhes finos da forma.`,
-    )
+    !(await confirm(
+      `${reason} Simplificar reduz o número de triângulos e pode apagar detalhes finos da forma.`,
+    ))
   ) {
     if (tooBig)
       throw new Error(

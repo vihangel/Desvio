@@ -21,3 +21,14 @@ export const ROOM_BOUNDS = {
   depth: 5.7,
 };
 export const SCALE_LIMITS = { min: 0.1, max: 4 };
+
+const MB = 1_000_000;
+export const megabytesLabel = (bytes: number) => `${bytes / MB} MB`;
+// Largest file accepted at each step. "Input" limits apply before optimization.
+export const UPLOAD_LIMITS = {
+  remote: { image: 5 * MB, model: 24 * MB, audio: 20 * MB },
+  local: { image: 1 * MB, file: 12 * MB },
+  modelInput: 150 * MB,
+  imageInput: 30 * MB,
+  captions: 200_000,
+} as const;

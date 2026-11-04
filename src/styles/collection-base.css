@@ -6,25 +6,6 @@
 .admin > p {
   color: var(--color-muted);
 }
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  margin: 42px 0;
-}
-.metrics > div {
-  background: #e8e7e0;
-  padding: 22px;
-  border-radius: 8px;
-}
-.metrics small,
-.metrics b {
-  display: block;
-}
-.metrics b {
-  font-size: 34px;
-  margin-top: 9px;
-}
 .works {
   display: grid;
   gap: 7px;
@@ -39,8 +20,7 @@
   gap: 18px;
   border-radius: 7px;
 }
-.works img,
-.thumb {
+.works img {
   width: 62px;
   height: 62px;
   object-fit: cover;

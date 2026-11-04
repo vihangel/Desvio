@@ -152,9 +152,6 @@
   color: var(--color-muted);
   align-self: start;
 }
-.about-note {
-  font-size: 15px;
-}
 
 /* Residencies: dark band */
 .about-band {

@@ -18,18 +18,6 @@ export class SupabaseAuthService implements AuthService {
       email: data.session.user.email ?? "",
     };
     const who = await this.client.rpc("desvio_whoami");
-    // Before the artist-accounts migration only curators exist.
-    if (who.error?.code === "PGRST202") {
-      const result = await this.client.rpc("desvio_is_editor");
-      if (result.error) throw result.error;
-      const editor = result.data === true;
-      return {
-        ...base,
-        editor,
-        role: editor ? ("curator" as const) : null,
-        artistId: null,
-      };
-    }
     if (who.error) throw who.error;
     const { role, artistId } = (who.data ?? {}) as {
       role?: AuthIdentity["role"];
