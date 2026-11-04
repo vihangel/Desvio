@@ -1,6 +1,6 @@
 # Integração Supabase
 
-O projeto **Desvio Museu Virtual** (`rptvhzdbenwrnhxhrfjb`) está conectado, com cinco migrações aplicadas e 10 registros publicados. Leia [MIGRACOES.md](MIGRACOES.md) para entrar, importar edições locais e configurar outra máquina.
+O projeto **Desvio Museu Virtual** (`rptvhzdbenwrnhxhrfjb`) está conectado, com nove migrações aplicadas e 11 registros publicados (verificação de 04/11/2026). Leia [MIGRACOES.md](MIGRACOES.md) para entrar, importar edições locais e configurar outra máquina.
 
 O Supabase é a fonte padrão do admin e do museu. Login usa Auth; permissões usam vínculos privados de curadoria e RLS. Cadastro de conta não concede acesso editorial, exceto ao e-mail reservado e confirmado para o primeiro administrador. `user_metadata` não participa da autorização.
 
