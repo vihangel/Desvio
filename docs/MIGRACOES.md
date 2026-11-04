@@ -1,6 +1,6 @@
 # Supabase do Desvio
 
-As cinco migrações já foram aplicadas em **Desvio Museu Virtual** (`rptvhzdbenwrnhxhrfjb`), na conta conectada “Linscker Museu”, em 14/10/2026. Não é necessário executá-las novamente neste projeto.
+As cinco migrações iniciais foram aplicadas em **Desvio Museu Virtual** (`rptvhzdbenwrnhxhrfjb`), na conta conectada “Linscker Museu”, em 14/10/2026. As migrações posteriores também estão aplicadas, incluindo a atualização de 04/11/2026. Não execute novamente nenhuma delas neste banco.
 
 1. `20261014013434_desvio_collection.sql`: acervo, edições, permissões e operações editoriais.
 2. `20261014013655_desvio_storage.sql`: Storage privado.
@@ -52,11 +52,11 @@ Para instalar em outro banco vazio, execute todos os arquivos de `supabase/migra
 - `20261014200000_desvio_replace_draft_from_local.sql`: importar o acervo local depois de haver edições remotas.
 - `20261014210000_desvio_record_status.sql`: status por obra.
 - `20261015090000_desvio_artist_accounts.sql`: contas de artista.
-- `20261103090000_desvio_schema_improvements.sql`: **ainda não aplicada no projeto**. O que muda:
+- `20261103090000_desvio_schema_improvements.sql`: **aplicada em 04/11/2026** no projeto `rptvhzdbenwrnhxhrfjb`, registrada no histórico do Supabase como `20261104140709_desvio_schema_improvements`. O que mudou:
   - **Remover acesso** deixa de falhar para quem já editou: o histórico fica, sem o vínculo com a conta.
   - Edições públicas sem uso são **apagadas de vez**: as antigas, ao aplicar, e a atual, a cada vez que a exposição sai do ar. O rascunho não é afetado, e a edição pública é recriada ao colocar no ar de novo.
   - Novos índices e checagens de integridade. Se algum dado existente não passar, a migração para com erro e nada é alterado.
   - Um único validador e funções comuns para os comandos da curadoria e de artista. A legenda `.vtt` passa a ser validada também no servidor, e a importação local passa a exigir o mesmo das obras publicadas.
   - Saem funções sem uso (`desvio_import_local`, `desvio_remove_artist_account`) e o tipo `application/octet-stream` do bucket, já que os modelos sempre chegam como GLB.
 
-  Pode ser aplicada antes ou depois de publicar o site: o código novo funciona com ou sem ela.
+  A aplicação foi validada em 04/11/2026. Não havia versões órfãs a excluir; o rascunho (12 obras) e a edição pública (11 obras) foram preservados, com revisão `8`. As novas funções `desvio_private.commit_edit` e `desvio_private.validate_snapshot(jsonb)` foram verificadas, assim como a remoção das antigas. A consulta pública continuou retornando 11 obras e 3 salas. Não reaplique a migração.
